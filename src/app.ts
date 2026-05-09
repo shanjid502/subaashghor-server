@@ -7,7 +7,12 @@ import notFound from './app/middlewares/notFound';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import config from './app/config';
 
+import { setupSwagger } from './app/utils/swagger';
+
 const app: Application = express();
+
+// ── Swagger Documentation ──────────────────────────────────────────────────
+setupSwagger(app);
 
 // ── Global Middlewares ────────────────────────────────────────────────────────
 app.use(helmet());
