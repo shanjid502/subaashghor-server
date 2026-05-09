@@ -1,7 +1,7 @@
 import express from 'express';
 import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { NotifyMeService } from './notifyMe.service';
+import { NotifyMeService } from './notifyme.service';
 import { StatusCodes } from 'http-status-codes';
 
 const router = express.Router();

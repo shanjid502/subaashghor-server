@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { ISiteConfig } from './siteConfig.interface';
+import { ISiteConfig } from './siteconfig.interface';
 
 const siteConfigSchema = new Schema<ISiteConfig>(
   {

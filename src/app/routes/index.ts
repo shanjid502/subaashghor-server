@@ -10,10 +10,11 @@ import { ProfileRoutes } from '../modules/Profile/profile.route';
 import { AddressRoutes } from '../modules/Address/address.route';
 import { WishlistRoutes } from '../modules/Wishlist/wishlist.route';
 import { NewsletterRoutes } from '../modules/Newsletter/newsletter.route';
-import { LeadRoutes } from '../modules/Newsletter/lead.route';
-import { NotifyMeRoutes } from '../modules/NotifyMe/notifyMe.route';
-import { SiteConfigRoutes } from '../modules/SiteConfig/siteConfig.route';
+import { LeadRoutes } from '../modules/Newsletter/newsletter.lead.route';
+import { NotifyMeRoutes } from '../modules/NotifyMe/notifyme.route';
+
 import { WebhookRoutes } from '../modules/Webhook/webhook.route';
+import { SiteConfigRoutes } from '../modules/SiteConfig/siteconfig.route';
 
 const router = Router();
 

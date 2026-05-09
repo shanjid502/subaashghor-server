@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { INotifyMe } from './notifyMe.interface';
+import { INotifyMe } from './notifyme.interface';
 
 const notifyMeSchema = new Schema<INotifyMe>(
   {

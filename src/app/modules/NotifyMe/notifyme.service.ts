@@ -1,4 +1,4 @@
-import { NotifyMeModel } from './notifyMe.model';
+import { NotifyMeModel } from './notifyme.model';
 
 const subscribe = async (payload: {
   productId: string;

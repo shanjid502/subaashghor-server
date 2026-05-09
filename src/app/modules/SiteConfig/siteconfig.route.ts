@@ -1,7 +1,7 @@
 import express from 'express';
 import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { SiteConfigModel } from './siteConfig.model';
+import { SiteConfigModel } from './siteconfig.model';
 import auth from '../../middlewares/auth';
 import { StatusCodes } from 'http-status-codes';
 
