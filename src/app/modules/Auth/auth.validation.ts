@@ -1,12 +1,37 @@
 import { z } from 'zod';
 
-const loginSchema = z.object({
+const signupSchema = z.object({
   body: z.object({
-    email: z.email('Invalid email format'),
-    password: z
-      .string({ message: 'Password is required' })
-      .min(6, 'Min 6 characters'),
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    phone: z.string().optional(),
   }),
 });
 
-export const AuthValidation = { loginSchema };
+const loginSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(1, 'Password is required'),
+  }),
+});
+
+const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+  }),
+});
+
+const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(1, 'Token is required'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+  }),
+});
+
+export const AuthValidation = {
+  signupSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+};

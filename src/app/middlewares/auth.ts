@@ -14,19 +14,29 @@ declare global {
   }
 }
 
+/**
+ * Cookie-based auth guard.
+ * Reads `sg_session` httpOnly cookie.
+ * Pass requiredRoles to restrict access; pass none to allow any authenticated user.
+ * Pass `optional: true` as the last argument string to skip 401 for unauthenticated requests
+ * (req.user will be undefined in that case).
+ */
 const auth = (...requiredRoles: string[]) => {
+  const optional = requiredRoles.includes('optional');
+  const roles = requiredRoles.filter((r) => r !== 'optional');
+
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      const authHeader = req.headers.authorization;
+      const token = req.cookies?.sg_session;
 
-      if (!authHeader?.startsWith('Bearer ')) {
+      if (!token) {
+        if (optional) return next();
         return next(new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized!'));
       }
 
-      const token = authHeader.split(' ')[1];
-      const decoded = verifyToken(token, config.jwt_access_secret as string);
+      const decoded = verifyToken(token, config.jwt_access_secret);
 
-      if (requiredRoles.length && !requiredRoles.includes(decoded.role)) {
+      if (roles.length && !roles.includes(decoded.role)) {
         return next(
           new AppError(StatusCodes.FORBIDDEN, 'You do not have the required permissions!'),
         );
@@ -35,7 +45,8 @@ const auth = (...requiredRoles: string[]) => {
       req.user = decoded as JwtPayload & { userId: string; role: string };
       next();
     } catch {
-      next(new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired token!'));
+      if (optional) return next();
+      next(new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired session!'));
     }
   };
 };
