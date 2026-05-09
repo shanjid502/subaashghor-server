@@ -36,9 +36,14 @@ const placeOrder = async (input: PlaceOrderInput) => {
     const resolvedItems: IOrderItem[] = [];
 
     for (const item of input.items) {
-      const product = await ProductModel.findById(item.productId).session(session);
+      const product = await ProductModel.findById(item.productId).session(
+        session,
+      );
       if (!product) {
-        throw new AppError(StatusCodes.UNPROCESSABLE_ENTITY, `Product not found: ${item.productId}`);
+        throw new AppError(
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          `Product not found: ${item.productId}`,
+        );
       }
 
       const sizeEntry = product.sizes.find((s) => s.ml === item.ml);
@@ -81,20 +86,25 @@ const placeOrder = async (input: PlaceOrderInput) => {
     }
 
     // 2. Shipping fee
-    const shippingFee = subtotal >= config.free_shipping_threshold ? 0 : config.shipping_fee;
+    const shippingFee =
+      subtotal >= config.free_shipping_threshold ? 0 : config.shipping_fee;
 
     // 3. Re-validate coupon and compute discount
     let discount = 0;
     let couponCode: string | undefined;
     if (input.couponCode) {
       try {
-        const coupon = await CouponService.validateCoupon(input.couponCode, subtotal);
+        const coupon = await CouponService.validateCoupon(
+          input.couponCode,
+          subtotal,
+        );
         couponCode = coupon.code;
         if (coupon.type === 'flat') {
           discount = coupon.value;
         } else {
           discount = Math.round((subtotal * coupon.value) / 100);
-          if (coupon.maxDiscount) discount = Math.min(discount, coupon.maxDiscount);
+          if (coupon.maxDiscount)
+            discount = Math.min(discount, coupon.maxDiscount);
         }
         // Increment usage count
         await CouponModel.findOneAndUpdate(
@@ -160,7 +170,10 @@ const placeOrder = async (input: PlaceOrderInput) => {
 
 const getOrderByIdOrNumber = async (idOrNumber: string, userId?: string) => {
   const filter: Record<string, unknown> = {
-    $or: [{ orderNumber: idOrNumber }, ...(mongoose.isValidObjectId(idOrNumber) ? [{ _id: idOrNumber }] : [])],
+    $or: [
+      { orderNumber: idOrNumber },
+      ...(mongoose.isValidObjectId(idOrNumber) ? [{ _id: idOrNumber }] : []),
+    ],
   };
   if (userId) filter.userId = userId;
 
@@ -177,7 +190,9 @@ const updateOrderStatus = async (
   orderNumber: string,
   update: { status?: string; paymentStatus?: string; trackingId?: string },
 ) => {
-  const order = await OrderModel.findOneAndUpdate({ orderNumber }, update, { new: true });
+  const order = await OrderModel.findOneAndUpdate({ orderNumber }, update, {
+    new: true,
+  });
   if (!order) throw new AppError(StatusCodes.NOT_FOUND, 'Order not found.');
   return order;
 };

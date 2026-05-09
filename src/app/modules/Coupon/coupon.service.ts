@@ -10,7 +10,10 @@ const validateCoupon = async (code: string, subtotal: number) => {
   }
 
   if (coupon.expiresAt && new Date() > coupon.expiresAt) {
-    throw new AppError(StatusCodes.UNPROCESSABLE_ENTITY, 'This coupon has expired.');
+    throw new AppError(
+      StatusCodes.UNPROCESSABLE_ENTITY,
+      'This coupon has expired.',
+    );
   }
 
   if (coupon.minSubtotal && subtotal < coupon.minSubtotal) {
@@ -21,7 +24,10 @@ const validateCoupon = async (code: string, subtotal: number) => {
   }
 
   if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-    throw new AppError(StatusCodes.UNPROCESSABLE_ENTITY, 'This coupon has reached its usage limit.');
+    throw new AppError(
+      StatusCodes.UNPROCESSABLE_ENTITY,
+      'This coupon has reached its usage limit.',
+    );
   }
 
   return {
@@ -36,7 +42,8 @@ const validateCoupon = async (code: string, subtotal: number) => {
   };
 };
 
-const createCoupon = async (payload: unknown) => CouponModel.create(payload as object);
+const createCoupon = async (payload: unknown) =>
+  CouponModel.create(payload as object);
 
 const getAllCoupons = async () => CouponModel.find().lean();
 

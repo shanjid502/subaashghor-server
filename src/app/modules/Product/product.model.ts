@@ -44,6 +44,10 @@ const productSchema = new Schema<IProduct>(
 
 productSchema.index({ slug: 1 });
 productSchema.index({ category: 1 });
-productSchema.index({ 'name.en': 'text', 'name.bn': 'text', description: 'text' });
+productSchema.index({
+  'name.en': 'text',
+  'name.bn': 'text',
+  description: 'text',
+});
 
 export const ProductModel = model<IProduct>('Product', productSchema);

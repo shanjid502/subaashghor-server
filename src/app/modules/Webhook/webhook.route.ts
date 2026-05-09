@@ -32,7 +32,12 @@ router.post(
     }
 
     // Always 200 to bKash
-    sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'OK', data: {} });
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'OK',
+      data: {},
+    });
   }),
 );
 

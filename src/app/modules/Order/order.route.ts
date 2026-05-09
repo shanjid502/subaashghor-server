@@ -11,9 +11,17 @@ router.post('/', auth('optional'), OrderControllers.placeOrder);
 router.get('/mine', auth('customer', 'admin'), OrderControllers.getMyOrders);
 
 // GET /orders/:idOrNumber — optional auth; service checks ownership
-router.get('/:idOrNumber', auth('optional'), OrderControllers.getOrderByIdOrNumber);
+router.get(
+  '/:idOrNumber',
+  auth('optional'),
+  OrderControllers.getOrderByIdOrNumber,
+);
 
 // Admin status update
-router.patch('/:orderNumber/status', auth('admin'), OrderControllers.updateOrderStatus);
+router.patch(
+  '/:orderNumber/status',
+  auth('admin'),
+  OrderControllers.updateOrderStatus,
+);
 
 export const OrderRoutes = router;

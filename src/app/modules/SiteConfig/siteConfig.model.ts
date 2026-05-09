@@ -9,4 +9,7 @@ const siteConfigSchema = new Schema<ISiteConfig>(
   { timestamps: true },
 );
 
-export const SiteConfigModel = model<ISiteConfig>('SiteConfig', siteConfigSchema);
+export const SiteConfigModel = model<ISiteConfig>(
+  'SiteConfig',
+  siteConfigSchema,
+);

@@ -25,8 +25,10 @@ const getAllProducts = async (query: ProductQuery) => {
   if (query.collection) filter.collections = query.collection;
   if (query.minPrice || query.maxPrice) {
     filter.price = {};
-    if (query.minPrice) (filter.price as Record<string, unknown>).$gte = Number(query.minPrice);
-    if (query.maxPrice) (filter.price as Record<string, unknown>).$lte = Number(query.maxPrice);
+    if (query.minPrice)
+      (filter.price as Record<string, unknown>).$gte = Number(query.minPrice);
+    if (query.maxPrice)
+      (filter.price as Record<string, unknown>).$lte = Number(query.maxPrice);
   }
   if (query.notes) {
     const notesArr = Array.isArray(query.notes) ? query.notes : [query.notes];
@@ -84,10 +86,14 @@ const createProduct = async (payload: unknown) => {
 };
 
 const updateProduct = async (slug: string, payload: unknown) => {
-  const product = await ProductModel.findOneAndUpdate({ slug } as object, payload as object, {
-    new: true,
-    runValidators: true,
-  });
+  const product = await ProductModel.findOneAndUpdate(
+    { slug } as object,
+    payload as object,
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
   if (!product) throw new AppError(StatusCodes.NOT_FOUND, 'Product not found.');
   return product;
 };

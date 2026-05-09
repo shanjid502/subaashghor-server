@@ -17,7 +17,12 @@ router.get(
       return acc;
     }, {});
     res.set('Cache-Control', 'public, max-age=60');
-    sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'Site config fetched.', data });
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Site config fetched.',
+      data,
+    });
   }),
 );
 
@@ -29,10 +34,19 @@ router.patch(
     const updates = Object.entries(req.body as Record<string, unknown>);
     await Promise.all(
       updates.map(([key, value]) =>
-        SiteConfigModel.findOneAndUpdate({ key }, { key, value }, { upsert: true, new: true }),
+        SiteConfigModel.findOneAndUpdate(
+          { key },
+          { key, value },
+          { upsert: true, new: true },
+        ),
       ),
     );
-    sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'Site config updated.', data: {} });
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'Site config updated.',
+      data: {},
+    });
   }),
 );
 

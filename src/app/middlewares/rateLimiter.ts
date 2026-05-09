@@ -5,7 +5,8 @@ export const globalRateLimiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per windowMs
   message: {
     success: false,
-    message: 'Too many requests from this IP, please try again after 15 minutes',
+    message:
+      'Too many requests from this IP, please try again after 15 minutes',
   },
   standardHeaders: true,
   legacyHeaders: false,

@@ -2,7 +2,9 @@ import { ReviewModel } from './review.model';
 import { updateProductRating } from './review.utils';
 
 const getReviewsByProduct = async (productId: string) => {
-  return ReviewModel.find({ productId, status: 'approved' }).sort('-createdAt').lean();
+  return ReviewModel.find({ productId, status: 'approved' })
+    .sort('-createdAt')
+    .lean();
 };
 
 const submitReview = async (payload: {
@@ -20,10 +22,21 @@ const submitReview = async (payload: {
   return review;
 };
 
-const updateReviewStatus = async (reviewId: string, status: 'approved' | 'rejected') => {
-  const review = await ReviewModel.findByIdAndUpdate(reviewId, { status }, { new: true });
+const updateReviewStatus = async (
+  reviewId: string,
+  status: 'approved' | 'rejected',
+) => {
+  const review = await ReviewModel.findByIdAndUpdate(
+    reviewId,
+    { status },
+    { new: true },
+  );
   if (review) await updateProductRating(review.productId);
   return review;
 };
 
-export const ReviewService = { getReviewsByProduct, submitReview, updateReviewStatus };
+export const ReviewService = {
+  getReviewsByProduct,
+  submitReview,
+  updateReviewStatus,
+};

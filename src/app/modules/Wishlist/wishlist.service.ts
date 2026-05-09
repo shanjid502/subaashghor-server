@@ -5,7 +5,10 @@ const getWishlist = async (userId: string): Promise<string[]> => {
   return wishlist?.slugs ?? [];
 };
 
-const addToWishlist = async (userId: string, slug: string): Promise<string[]> => {
+const addToWishlist = async (
+  userId: string,
+  slug: string,
+): Promise<string[]> => {
   const wishlist = await WishlistModel.findOneAndUpdate(
     { userId },
     { $addToSet: { slugs: slug } },
@@ -14,7 +17,10 @@ const addToWishlist = async (userId: string, slug: string): Promise<string[]> =>
   return wishlist.slugs;
 };
 
-const removeFromWishlist = async (userId: string, slug: string): Promise<string[]> => {
+const removeFromWishlist = async (
+  userId: string,
+  slug: string,
+): Promise<string[]> => {
   const wishlist = await WishlistModel.findOneAndUpdate(
     { userId },
     { $pull: { slugs: slug } },
@@ -23,4 +29,8 @@ const removeFromWishlist = async (userId: string, slug: string): Promise<string[
   return wishlist?.slugs ?? [];
 };
 
-export const WishlistService = { getWishlist, addToWishlist, removeFromWishlist };
+export const WishlistService = {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+};

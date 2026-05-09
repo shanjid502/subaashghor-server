@@ -20,4 +20,7 @@ const collectionSchema = new Schema<ICollection>(
   { timestamps: true },
 );
 
-export const CollectionModel = model<ICollection>('Collection', collectionSchema);
+export const CollectionModel = model<ICollection>(
+  'Collection',
+  collectionSchema,
+);

@@ -10,7 +10,12 @@ router.post(
   '/',
   catchAsync(async (req, res) => {
     const data = await NotifyMeService.subscribe(req.body);
-    sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'You will be notified.', data });
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: 'You will be notified.',
+      data,
+    });
   }),
 );
 

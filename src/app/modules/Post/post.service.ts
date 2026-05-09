@@ -12,12 +12,22 @@ const getPostBySlug = async (slug: string) => {
   return post;
 };
 
-const createPost = async (payload: unknown) => PostModel.create(payload as object);
+const createPost = async (payload: unknown) =>
+  PostModel.create(payload as object);
 
 const updatePost = async (slug: string, payload: unknown) => {
-  const post = await PostModel.findOneAndUpdate({ slug } as object, payload as object, { new: true });
+  const post = await PostModel.findOneAndUpdate(
+    { slug } as object,
+    payload as object,
+    { new: true },
+  );
   if (!post) throw new AppError(StatusCodes.NOT_FOUND, 'Post not found.');
   return post;
 };
 
-export const PostService = { getAllPosts, getPostBySlug, createPost, updatePost };
+export const PostService = {
+  getAllPosts,
+  getPostBySlug,
+  createPost,
+  updatePost,
+};

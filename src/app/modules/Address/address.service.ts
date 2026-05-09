@@ -11,7 +11,11 @@ const addAddress = async (userId: string, payload: object) => {
   return address;
 };
 
-const updateAddress = async (userId: string, addressId: string, payload: object) => {
+const updateAddress = async (
+  userId: string,
+  addressId: string,
+  payload: object,
+) => {
   const address = await AddressModel.findOneAndUpdate(
     { _id: addressId, userId },
     payload,
@@ -28,7 +32,10 @@ const deleteAddress = async (userId: string, addressId: string) => {
 
 const setDefaultAddress = async (userId: string, addressId: string) => {
   await AddressModel.updateMany({ userId }, { isDefault: false });
-  await AddressModel.findOneAndUpdate({ _id: addressId, userId }, { isDefault: true });
+  await AddressModel.findOneAndUpdate(
+    { _id: addressId, userId },
+    { isDefault: true },
+  );
   return AddressModel.find({ userId }).lean();
 };
 

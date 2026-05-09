@@ -9,7 +9,11 @@ const reviewSchema = new Schema<IReview>(
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, required: true },
     images: { type: [String], default: [] },
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
   },
   { timestamps: true },
 );

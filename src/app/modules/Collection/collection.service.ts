@@ -9,7 +9,10 @@ const getAllCollections = async () => {
   const withCounts = await Promise.all(
     collections.map(async (c) => ({
       ...c,
-      productCount: await ProductModel.countDocuments({ collections: c.slug, isActive: true }),
+      productCount: await ProductModel.countDocuments({
+        collections: c.slug,
+        isActive: true,
+      }),
     })),
   );
   return withCounts;
@@ -17,8 +20,12 @@ const getAllCollections = async () => {
 
 const getCollectionBySlug = async (slug: string) => {
   const collection = await CollectionModel.findOne({ slug }).lean();
-  if (!collection) throw new AppError(StatusCodes.NOT_FOUND, 'Collection not found.');
-  const productCount = await ProductModel.countDocuments({ collections: slug, isActive: true });
+  if (!collection)
+    throw new AppError(StatusCodes.NOT_FOUND, 'Collection not found.');
+  const productCount = await ProductModel.countDocuments({
+    collections: slug,
+    isActive: true,
+  });
   return { ...collection, productCount };
 };
 

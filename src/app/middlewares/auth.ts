@@ -31,14 +31,19 @@ const auth = (...requiredRoles: string[]) => {
 
       if (!token) {
         if (optional) return next();
-        return next(new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized!'));
+        return next(
+          new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized!'),
+        );
       }
 
       const decoded = verifyToken(token, config.jwt_access_secret);
 
       if (roles.length && !roles.includes(decoded.role)) {
         return next(
-          new AppError(StatusCodes.FORBIDDEN, 'You do not have the required permissions!'),
+          new AppError(
+            StatusCodes.FORBIDDEN,
+            'You do not have the required permissions!',
+          ),
         );
       }
 
@@ -46,7 +51,9 @@ const auth = (...requiredRoles: string[]) => {
       next();
     } catch {
       if (optional) return next();
-      next(new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired session!'));
+      next(
+        new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired session!'),
+      );
     }
   };
 };

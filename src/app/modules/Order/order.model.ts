@@ -41,10 +41,21 @@ const orderSchema = new Schema<IOrder>(
     total: { type: Number, required: true },
     couponCode: String,
     paymentMethod: { type: String, enum: ['cod', 'bkash'], required: true },
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed'],
+      default: 'pending',
+    },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'],
+      enum: [
+        'pending',
+        'confirmed',
+        'packed',
+        'shipped',
+        'delivered',
+        'cancelled',
+      ],
       default: 'pending',
     },
     trackingId: String,

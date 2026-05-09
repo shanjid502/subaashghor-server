@@ -6,8 +6,15 @@ import { ReviewService } from './review.service';
 import { UserModel } from '../Auth/auth.model';
 
 const getReviews = catchAsync(async (req: Request, res: Response) => {
-  const data = await ReviewService.getReviewsByProduct(req.query.productId as string);
-  sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'Reviews fetched.', data });
+  const data = await ReviewService.getReviewsByProduct(
+    req.query.productId as string,
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Reviews fetched.',
+    data,
+  });
 });
 
 const submitReview = catchAsync(async (req: Request, res: Response) => {
@@ -27,8 +34,16 @@ const submitReview = catchAsync(async (req: Request, res: Response) => {
 });
 
 const moderateReview = catchAsync(async (req: Request, res: Response) => {
-  const data = await ReviewService.updateReviewStatus(req.params.id, req.body.status);
-  sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'Review moderated.', data });
+  const data = await ReviewService.updateReviewStatus(
+    req.params.id,
+    req.body.status,
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Review moderated.',
+    data,
+  });
 });
 
 export const ReviewControllers = { getReviews, submitReview, moderateReview };

@@ -34,7 +34,13 @@ export interface IOrder extends Document {
   couponCode?: string;
   paymentMethod: 'cod' | 'bkash';
   paymentStatus: 'pending' | 'paid' | 'failed';
-  status: 'pending' | 'confirmed' | 'packed' | 'shipped' | 'delivered' | 'cancelled';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'packed'
+    | 'shipped'
+    | 'delivered'
+    | 'cancelled';
   trackingId?: string;
   createdAt: Date;
   updatedAt: Date;

@@ -6,8 +6,16 @@ import auth from '../../middlewares/auth';
 
 const router = express.Router();
 
-router.post('/signup', validateRequest(AuthValidation.signupSchema), AuthControllers.signup);
-router.post('/login', validateRequest(AuthValidation.loginSchema), AuthControllers.login);
+router.post(
+  '/signup',
+  validateRequest(AuthValidation.signupSchema),
+  AuthControllers.signup,
+);
+router.post(
+  '/login',
+  validateRequest(AuthValidation.loginSchema),
+  AuthControllers.login,
+);
 router.post('/logout', AuthControllers.logout);
 router.get('/me', auth('optional'), AuthControllers.getMe);
 router.post(

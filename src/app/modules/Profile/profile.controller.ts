@@ -6,12 +6,22 @@ import { ProfileService } from './profile.service';
 
 const getProfile = catchAsync(async (req: Request, res: Response) => {
   const data = await ProfileService.getProfile(req.user.userId);
-  sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'Profile fetched.', data });
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Profile fetched.',
+    data,
+  });
 });
 
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const data = await ProfileService.updateProfile(req.user.userId, req.body);
-  sendResponse(res, { statusCode: StatusCodes.OK, success: true, message: 'Profile updated.', data });
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Profile updated.',
+    data,
+  });
 });
 
 const updateAvatar = catchAsync(async (req: Request, res: Response) => {

@@ -21,7 +21,9 @@ const updateProfile = async (
   userId: string,
   payload: IProfileUpdate,
 ): Promise<IProfile> => {
-  const user = await UserModel.findByIdAndUpdate(userId, payload, { new: true });
+  const user = await UserModel.findByIdAndUpdate(userId, payload, {
+    new: true,
+  });
   if (!user) throw new AppError(StatusCodes.NOT_FOUND, 'User not found.');
   return {
     _id: (user._id as any).toString(),

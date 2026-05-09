@@ -35,7 +35,10 @@ const getSingleNewslatter = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateNewslatter = catchAsync(async (req: Request, res: Response) => {
-  const result = await NewslatterService.updateNewslatter(req.params.id, req.body);
+  const result = await NewslatterService.updateNewslatter(
+    req.params.id,
+    req.body,
+  );
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
