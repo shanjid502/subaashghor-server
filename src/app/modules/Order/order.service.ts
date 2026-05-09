@@ -8,6 +8,7 @@ import { CouponService } from '../Coupon/coupon.service';
 import { CouponModel } from '../Coupon/coupon.model';
 import { sendEmail, orderConfirmationEmail } from '../../utils/email.utils';
 import config from '../../config';
+import { generateOrderNumber } from './order.utils';
 
 interface PlaceOrderInput {
   items: Array<{
@@ -24,19 +25,6 @@ interface PlaceOrderInput {
   couponCode?: string;
   userId?: string;
 }
-
-const generateOrderNumber = async (): Promise<string> => {
-  const max = 999999;
-  const min = 100000;
-  let orderNumber: string;
-  let exists = true;
-  do {
-    const digits = Math.floor(Math.random() * (max - min + 1)) + min;
-    orderNumber = `SG-${digits}`;
-    exists = !!(await OrderModel.findOne({ orderNumber }));
-  } while (exists);
-  return orderNumber;
-};
 
 const placeOrder = async (input: PlaceOrderInput) => {
   const session = await mongoose.startSession();

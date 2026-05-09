@@ -7,18 +7,10 @@ import { createToken } from '../../utils/jwt.utils';
 import { sendEmail, passwordResetEmail } from '../../utils/email.utils';
 import { UserModel } from './auth.model';
 import { ISignup, ILogin, IForgotPassword, IResetPassword } from './auth.interface';
+import { formatUser } from './auth.utils';
 
 const COOKIE_NAME = 'sg_session';
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days
-
-const formatUser = (user: InstanceType<typeof UserModel>) => ({
-  _id: user._id.toString(),
-  name: user.name,
-  email: user.email,
-  phone: user.phone,
-  role: user.role,
-  createdAt: (user as any).createdAt,
-});
 
 const signup = async (payload: ISignup) => {
   const existing = await UserModel.findOne({ email: payload.email.toLowerCase() });
@@ -39,7 +31,7 @@ const signup = async (payload: ISignup) => {
     config.jwt_access_expires_in,
   );
 
-  return { token: accessToken, user: formatUser(user) };
+  return { token: accessToken, user: formatUser(user as any) };
 };
 
 const login = async (payload: ILogin) => {
@@ -59,13 +51,13 @@ const login = async (payload: ILogin) => {
     config.jwt_access_expires_in,
   );
 
-  return { token: accessToken, user: formatUser(user) };
+  return { token: accessToken, user: formatUser(user as any) };
 };
 
 const getMe = async (userId: string) => {
   const user = await UserModel.findById(userId);
   if (!user) return null;
-  return formatUser(user);
+  return formatUser(user as any);
 };
 
 const forgotPassword = async (payload: IForgotPassword) => {
