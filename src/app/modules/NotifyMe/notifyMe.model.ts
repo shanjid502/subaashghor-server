@@ -1,12 +1,5 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface INotifyMe extends Document {
-  productId: string;
-  sizeMl: number;
-  email: string;
-  fulfilledAt?: Date;
-  createdAt: Date;
-}
+import { Schema, model } from 'mongoose';
+import { INotifyMe } from './notifyMe.interface';
 
 const notifyMeSchema = new Schema<INotifyMe>(
   {

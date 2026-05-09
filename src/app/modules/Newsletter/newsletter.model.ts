@@ -1,9 +1,5 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface ISubscriber extends Document {
-  email: string;
-  subscribedAt: Date;
-}
+import { Schema, model } from 'mongoose';
+import { ISubscriber, ILead } from './newsletter.interface';
 
 const subscriberSchema = new Schema<ISubscriber>({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -11,15 +7,6 @@ const subscriberSchema = new Schema<ISubscriber>({
 });
 
 export const SubscriberModel = model<ISubscriber>('Subscriber', subscriberSchema);
-
-export interface ILead extends Document {
-  name?: string;
-  email: string;
-  source: string;
-  answers?: Record<string, string>;
-  couponCode?: string;
-  createdAt: Date;
-}
 
 const leadSchema = new Schema<ILead>(
   {

@@ -1,3 +1,18 @@
+import { Document } from 'mongoose';
+
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+  role: 'customer' | 'admin';
+  avatar?: string;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface ISignup {
   name: string;
   email: string;

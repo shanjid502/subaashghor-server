@@ -1,10 +1,5 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface ISiteConfig extends Document {
-  key: string;
-  value: unknown;
-  updatedAt: Date;
-}
+import { Schema, model } from 'mongoose';
+import { ISiteConfig } from './siteConfig.interface';
 
 const siteConfigSchema = new Schema<ISiteConfig>(
   {

@@ -1,17 +1,5 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface IAddress extends Document {
-  userId: string;
-  label?: string;
-  name: string;
-  phone: string;
-  address: string;
-  area: string;
-  city: string;
-  district: string;
-  postcode?: string;
-  isDefault: boolean;
-}
+import { Schema, model } from 'mongoose';
+import { IAddress } from './address.interface';
 
 const addressSchema = new Schema<IAddress>(
   {

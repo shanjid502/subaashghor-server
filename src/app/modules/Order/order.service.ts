@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
-import { OrderModel, IOrderItem, IShippingAddress } from './order.model';
+import { OrderModel } from './order.model';
+import { IOrderItem, IShippingAddress } from './order.interface';
 import { ProductModel } from '../Product/product.model';
 import { CouponService } from '../Coupon/coupon.service';
 import { CouponModel } from '../Coupon/coupon.model';

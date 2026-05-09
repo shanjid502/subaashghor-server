@@ -1,15 +1,5 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface IReview extends Document {
-  productId: string;
-  userId: string;
-  userName: string;
-  rating: number;
-  title?: string;
-  body: string;
-  status: 'pending' | 'published' | 'rejected';
-  createdAt: Date;
-}
+import { Schema, model } from 'mongoose';
+import { IReview } from './review.interface';
 
 const reviewSchema = new Schema<IReview>(
   {
@@ -17,9 +7,9 @@ const reviewSchema = new Schema<IReview>(
     userId: { type: String, required: true },
     userName: { type: String, required: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
-    title: String,
-    body: { type: String, required: true },
-    status: { type: String, enum: ['pending', 'published', 'rejected'], default: 'pending' },
+    comment: { type: String, required: true },
+    images: { type: [String], default: [] },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   },
   { timestamps: true },
 );

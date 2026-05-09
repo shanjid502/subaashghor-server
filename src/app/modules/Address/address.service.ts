@@ -27,7 +27,6 @@ const deleteAddress = async (userId: string, addressId: string) => {
 };
 
 const setDefaultAddress = async (userId: string, addressId: string) => {
-  // Unset all defaults, then set new one atomically
   await AddressModel.updateMany({ userId }, { isDefault: false });
   await AddressModel.findOneAndUpdate({ _id: addressId, userId }, { isDefault: true });
   return AddressModel.find({ userId }).lean();

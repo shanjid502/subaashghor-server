@@ -1,9 +1,5 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface IWishlist extends Document {
-  userId: string;
-  slugs: string[];
-}
+import { Schema, model } from 'mongoose';
+import { IWishlist } from './wishlist.interface';
 
 const wishlistSchema = new Schema<IWishlist>({
   userId: { type: String, required: true, unique: true },

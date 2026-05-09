@@ -1,28 +1,17 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface ICoupon extends Document {
-  code: string;
-  type: 'flat' | 'percent';
-  value: number;
-  minSubtotal?: number;
-  maxDiscount?: number;
-  expiresAt?: Date;
-  active: boolean;
-  usageLimit?: number;
-  usedCount: number;
-}
+import { Schema, model } from 'mongoose';
+import { ICoupon } from './coupon.interface';
 
 const couponSchema = new Schema<ICoupon>(
   {
-    code: { type: String, required: true, unique: true, uppercase: true, trim: true },
-    type: { type: String, enum: ['flat', 'percent'], required: true },
-    value: { type: Number, required: true, min: 0 },
-    minSubtotal: { type: Number, default: 0 },
+    code: { type: String, required: true, unique: true, uppercase: true },
+    type: { type: String, enum: ['percent', 'flat'], required: true },
+    value: { type: Number, required: true },
+    minSubtotal: Number,
     maxDiscount: Number,
     expiresAt: Date,
-    active: { type: Boolean, default: true },
     usageLimit: Number,
     usedCount: { type: Number, default: 0 },
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

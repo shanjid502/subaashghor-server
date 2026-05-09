@@ -1,6 +1,6 @@
-export interface IWishlist {
-  // TODO: Define your Wishlist fields here
-  // name: string;
-  // createdAt?: Date;
-  // updatedAt?: Date;
+import { Document } from 'mongoose';
+
+export interface IWishlist extends Document {
+  userId: string;
+  slugs: string[];
 }

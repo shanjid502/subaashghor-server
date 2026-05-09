@@ -1,28 +1,24 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model } from 'mongoose';
+import { IPost } from './post.interface';
 
-export interface IPost extends Document {
-  slug: string;
-  title: { bn: string; en: string };
-  excerpt: { bn: string; en: string };
-  content?: { bn: string; en: string };
-  category: { bn: string; en: string };
-  cover: string;
-  date: string;
-  isPublished: boolean;
-}
-
-const bilingualSchema = new Schema({ bn: String, en: String }, { _id: false });
+const bilingualSchema = new Schema(
+  {
+    en: { type: String, required: true },
+    bn: { type: String, required: true },
+  },
+  { _id: false },
+);
 
 const postSchema = new Schema<IPost>(
   {
-    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     title: { type: bilingualSchema, required: true },
-    excerpt: { type: bilingualSchema, required: true },
-    content: bilingualSchema,
-    category: { type: bilingualSchema, required: true },
-    cover: { type: String, required: true },
-    date: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    content: { type: bilingualSchema, required: true },
+    image: String,
+    author: { type: String, default: 'Admin' },
+    tags: { type: [String], default: [] },
     isPublished: { type: Boolean, default: true },
+    date: { type: Date, default: Date.now },
   },
   { timestamps: true },
 );

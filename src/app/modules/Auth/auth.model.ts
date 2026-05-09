@@ -1,19 +1,7 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
 import config from '../../config';
-
-export interface IUser extends Document {
-  name: string;
-  email: string;
-  phone?: string;
-  password: string;
-  role: 'customer' | 'admin';
-  avatar?: string;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { IUser } from './auth.interface';
 
 const userSchema = new Schema(
   {
@@ -30,19 +18,20 @@ const userSchema = new Schema(
 );
 
 // Hash password before save
-userSchema.pre('save', async function (next) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const doc = this as any;
+// Using any for 'this' and explicit signature for 'next' to resolve Mongoose v9 TS2349 errors
+userSchema.pre('save', function (this: any, next: any) {
+  const doc = this;
   if (!doc.isModified('password')) {
     return next();
   }
-  try {
-    const salt = await bcrypt.genSalt(config.bcrypt_salt_rounds);
-    doc.password = await bcrypt.hash(doc.password, salt);
-    next();
-  } catch (err) {
-    next(err as any);
-  }
+  bcrypt.genSalt(config.bcrypt_salt_rounds, (err, salt) => {
+    if (err) return next(err);
+    bcrypt.hash(doc.password, salt, (err, hash) => {
+      if (err) return next(err);
+      doc.password = hash;
+      next();
+    });
+  });
 });
 
 export const UserModel = model<IUser>('User', userSchema);

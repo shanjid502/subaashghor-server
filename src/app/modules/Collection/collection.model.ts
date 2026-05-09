@@ -1,22 +1,21 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model } from 'mongoose';
+import { ICollection } from './collection.interface';
 
-export interface ICollection extends Document {
-  slug: string;
-  name: { bn: string; en: string };
-  description?: { bn: string; en: string };
-  cover?: string;
-  productCount?: number;
-}
-
-const bilingualSchema = new Schema({ bn: String, en: String }, { _id: false });
+const bilingualSchema = new Schema(
+  {
+    en: { type: String, required: true },
+    bn: { type: String, required: true },
+  },
+  { _id: false },
+);
 
 const collectionSchema = new Schema<ICollection>(
   {
-    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: bilingualSchema, required: true },
+    slug: { type: String, required: true, unique: true },
+    image: String,
     description: bilingualSchema,
-    cover: String,
-    productCount: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

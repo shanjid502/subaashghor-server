@@ -7,7 +7,7 @@ import { CouponRoutes } from '../modules/Coupon/coupon.route';
 import { ReviewRoutes } from '../modules/Review/review.route';
 import { OrderRoutes } from '../modules/Order/order.route';
 import { ProfileRoutes } from '../modules/Profile/profile.route';
-import { AddressRoutes } from '../modules/Profile/address.route';
+import { AddressRoutes } from '../modules/Address/address.route';
 import { WishlistRoutes } from '../modules/Wishlist/wishlist.route';
 import { NewsletterRoutes } from '../modules/Newsletter/newsletter.route';
 import { LeadRoutes } from '../modules/Newsletter/lead.route';
@@ -32,7 +32,6 @@ const moduleRoutes = [
   { path: '/leads', route: LeadRoutes },
   { path: '/notify-me', route: NotifyMeRoutes },
   { path: '/site-config', route: SiteConfigRoutes },
-  // Public webhooks (no auth guard here — each webhook handles its own verification)
   { path: '/public/webhooks', route: WebhookRoutes },
 ];
 
