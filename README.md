@@ -1,163 +1,232 @@
-# server-subaashghor
+# 🚀 Subaashghor Backend API Server
 
-> Scaffolded with [create-express-modular](https://create-express-modular.lovable.app/) (cem)
-
-A production-ready, domain-driven **Express + TypeScript** backend.
-
-## Tech Stack
-
-| Layer | Choice |
-|---|---|
-| Runtime | Node.js ≥ 18 |
-| Framework | Express |
-| Language | TypeScript |
-| Database / ORM | Mongoose (MongoDB) |
-| Validation | Zod |
-| Auth | JWT (bcrypt + rate limiting) — HTTP-only cookies |
-| Containerization | Docker + docker-compose |
-
-## Getting Started
-
-```bash
-# Install dependencies (already done by CEM)
-npm install
-
-# Start the dev server with hot reload
-cem dev
-```
-
-Your server will be running at `http://localhost:5000`.
-
-Visit the root URL in a browser to see the **CEM Welcome Page** — a styled landing page showing project info, server status, and available routes.
-
-## Available Scripts
-
-| Command | Description |
-|---|---|
-| `cem dev` | Start dev server with live reload |
-| `cem build` | Convention guards + compile TypeScript to `dist/` |
-| `cem start` | Start the production server with preflight checks |
-| `cem check` | Type-check, lint, and format check in one command |
-| `cem list` | List all modules, middlewares, and env vars |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Run ESLint with auto-fix |
-| `npm run prettier:fix` | Format code with Prettier |
-
-## Package Manager (npm)
-
-This project was scaffolded with **npm**. Use it for all package operations:
-
-```bash
-# Install a production dependency
-npm install <package>
-
-# Install a dev dependency
-npm install -D <package>
-
-# Remove a package
-npm uninstall <package>
-
-# Re-install all dependencies
-npm install
-```
-
-> `cem dev`, `cem build`, `cem check`, and `cem start` are **package-manager-agnostic** —
-> they invoke tools directly from `node_modules/.bin/` and work the same regardless of which PM you use.
-
-## Adding Features
-
-### Add a module
-
-```bash
-cem add module Product
-```
-
-Creates a complete `Product` module in `src/app/modules/Product/` (controller, service, route, model, interface, validation) and auto-registers it in your router.
-
-### Add a middleware
-
-```bash
-cem add middleware rateLimiter
-```
-
-### Add an environment variable
-
-```bash
-cem add env STRIPE_SECRET_KEY
-```
-
-Adds the variable to `.env`, `.env.example`, and `src/app/config/index.ts` simultaneously.
-
-## Removing Features
-
-```bash
-cem remove module Product      # deletes folder + unwires route
-cem remove middleware logger    # deletes the middleware file
-cem remove env STRIPE_SECRET_KEY
-```
-
-## Project Structure
-
-```
-server-subaashghor/
-├── src/
-│   ├── app/
-│   │   ├── config/
-│   │   │   └── index.ts             # Central config (all env vars)
-│   │   ├── errors/                   # Error handler helpers
-│   │   ├── interfaces/               # Shared TypeScript types
-│   │   ├── middlewares/
-│   │   │   ├── globalErrorHandler.middleware.ts
-│   │   │   └── notFound.middleware.ts
-│   │   │   ├── auth.middleware.ts
-│   │   │   └── rateLimiter.middleware.ts
-│   │   ├── modules/
-│   │   │   └── Auth/             # JWT Auth module
-│   │   ├── routes/
-│   │   │   └── index.ts             # Unified routing registry
-│   │   └── utils/
-│   │       ├── catchAsync.ts
-│   │       ├── sendResponse.ts
-│   │       ├── validateRequest.ts
-│   │       ├── welcomePage.ts
-│   │       └── logger.ts
-│   ├── app.ts
-│   └── server.ts
-├── Dockerfile
-├── .dockerignore
-├── docker-compose.yml
-├── .env
-├── .env.example
-├── eslint.config.mjs
-├── tsconfig.json
-└── package.json
-```
-
-## Docker
-
-```bash
-# Start everything (app + database)
-docker-compose up --build
-
-# Production (single service, external DB)
-docker build -t server-subaashghor .
-docker run -p 5000:5000 --env-file .env server-subaashghor
-```
-
-## Error Handling
-
-The `globalErrorHandler` middleware is **stack-aware** — it maps database and validation errors into a consistent JSON response:
-
-```json
-{
-  "success": false,
-  "message": "Validation Error",
-  "errorSources": [
-    { "path": "email", "message": "Invalid email address" }
-  ]
-}
-```
+A production-ready, domain-driven **Express + TypeScript** backend built with a modular architecture for high-performance fragrance e-commerce.
 
 ---
 
-Built with [`create-express-modular`](https://create-express-modular.lovable.app/) — stop scaffolding, start shipping.
+## 🛠️ Architecture & Core Logic Flow
+
+This server utilizes a domain-driven modular structure located in `src/app/modules/`. Each module encapsulates its interfaces, Mongoose schemas, validators, routes, controllers, and services.
+
+### 1. Authentication & OTP Flow
+*   **Phone-centric Accounts:** Users register using their Bangladeshi phone numbers. Email is optional and protected by a sparse, unique database index to support passwordless signups.
+*   **Dynamic OTP Verification:** Requests to `/phone/request-otp` generate a code valid for 5 minutes.
+    *   *Production:* Codes are cryptographically secure 6-digit random integers.
+    *   *Development:* Falls back to `'1234'` for easy local mocking.
+*   **Auto-Account Provisioning:** Verifying an OTP code on an unregistered number automatically provisions a new customer account in the database.
+*   **OTP Password Reset:** Forgot-password requests via phone generate an OTP token of purpose `'reset-password'`, allowing users to securely reset their accounts without email access.
+*   **Rate Limiting Protection:** All auth endpoints are gated by `authRateLimiter` allowing a maximum of 5 requests per 15-minute window per IP.
+
+### 2. Products & Collections Management
+*   **ReDoS protection:** All text search queries (`q`) are sanitized to escape regex control characters before querying MongoDB.
+*   **Stock Tracking & Pricing:** Products support multiple sizes (e.g., 3ml, 6ml, 12ml). Pricing checks look up active promotional `salePrice` before falling back to default `price`.
+
+### 3. Order Processing & Stock Integrity
+*   **Atomic Stock Allocation:** During checkout, product size inventory is decremented atomically.
+*   **Stock Rollback on Failure:** If any item validation in the order array fails mid-process, the server triggers an automated rollback to re-increment and restore the inventory of all successfully reserved items.
+*   **Pricing Safeguards:** Order totals are calculated as `subtotal + shippingFee - discount` but are clamped to a minimum of `0` to prevent negative totals.
+*   **Shipping Logic:** Orders matching or exceeding `3,000 BDT` receive free shipping, otherwise a flat `130 BDT` shipping fee is applied.
+*   **Secure Guest Order Lookup:** To view order details for non-registered/guest checkouts, the requester must supply a matching phone number in the query parameter to prevent enumeration.
+
+---
+
+## 📡 API Endpoints Documentation
+
+All requests are prefixed with `http://localhost:5000/api/v1`.
+
+### 🔑 Authentication (`/auth`)
+
+#### 1. Request OTP Code
+`POST /auth/phone/request-otp`
+*   **Body:**
+    ```json
+    {
+      "phone": "01712345678",
+      "purpose": "login" // or "signup", "verify", "reset-password"
+    }
+    ```
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "OTP sent to mobile successfully",
+      "data": {
+        "sent": true,
+        "expiresInSec": 300,
+        "resendInSec": 60
+      }
+    }
+    ```
+
+#### 2. Verify OTP & Log In
+`POST /auth/phone/verify-otp`
+*   **Body:**
+    ```json
+    {
+      "phone": "01712345678",
+      "code": "1234",
+      "purpose": "login"
+    }
+    ```
+*   **Response (200 OK):** Sets the HTTP-only cookie `sg_session` and returns:
+    ```json
+    {
+      "success": true,
+      "message": "Phone verified and logged in successfully",
+      "data": {
+        "name": "User 5678",
+        "phone": "01712345678",
+        "role": "customer",
+        "phoneVerified": true
+      }
+    }
+    ```
+
+#### 3. Signup with Optional Email
+`POST /auth/signup`
+*   **Body:**
+    ```json
+    {
+      "name": "Jane Doe",
+      "phone": "01812345678",
+      "email": "jane@example.com",
+      "password": "securepassword1"
+    }
+    ```
+
+#### 4. Login via Password
+`POST /auth/login`
+*   **Body:**
+    ```json
+    {
+      "phone": "01712345678", // or "email"
+      "password": "securepassword1"
+    }
+    ```
+
+#### 5. Forgot Password (OTP Generation)
+`POST /auth/forgot-password`
+*   **Body:**
+    ```json
+    {
+      "phone": "01712345678" // or "email"
+    }
+    ```
+
+#### 6. Reset Password with OTP Code
+`POST /auth/reset-password`
+*   **Body:**
+    ```json
+    {
+      "phone": "01712345678",
+      "code": "1234",
+      "password": "myNewPassword789"
+    }
+    ```
+
+---
+
+### 📦 Products & Collections (`/products`, `/collections`)
+
+#### 1. Get All Products (Filtered & Paginated)
+`GET /products`
+*   **Query Params:**
+    *   `page`: Page number (default `1`)
+    *   `limit`: Page size (default `100`)
+    *   `category`: `men`, `women`, `attar`, `unisex`
+    *   `minPrice`, `maxPrice`
+    *   `q`: Search query string (escaped against ReDoS)
+    *   `sort`: `newest`, `price-asc`, `price-desc`, `popular`
+*   **Response:** List of products matching the criteria.
+
+#### 2. Get Featured Products
+`GET /products/featured`
+
+#### 3. Create Product (Admin Only)
+`POST /products`
+*   **Headers:** `Authorization: Bearer <JWT>`
+*   **Body:**
+    ```json
+    {
+      "name": { "en": "Rose Imperial", "bn": "রোজ ইম্পেরিয়াল" },
+      "tagline": { "en": "Majestic rose blend", "bn": "রাজকীয় গোলাপ সুবাস" },
+      "price": 1800,
+      "category": "unisex",
+      "images": ["https://res.cloudinary.com/image.jpg"],
+      "sizes": [
+        { "ml": 6, "price": 950, "stock": 45 },
+        { "ml": 12, "price": 1800, "stock": 20 }
+      ],
+      "notes": { "top": ["Rose"], "heart": ["Vanilla"], "base": ["Amber"] }
+    }
+    ```
+
+---
+
+### 🛒 Orders (`/orders`)
+
+#### 1. Place Order
+`POST /orders`
+*   **Body:**
+    ```json
+    {
+      "items": [
+        { "productId": "64b0f9c2d1b827e8a93d7c54", "ml": 6, "qty": 1 }
+      ],
+      "shipping": {
+        "name": "Jane Doe",
+        "phone": "01711223344",
+        "address": "House 12, Road 4",
+        "area": "Banani",
+        "city": "Dhaka",
+        "district": "Dhaka"
+      },
+      "paymentMethod": "cod",
+      "couponCode": "EID20"
+    }
+    ```
+
+#### 2. Get Guest or Authenticated Order Details
+`GET /orders/:idOrNumber`
+*   *For guests, you must supply the phone number matching shipping information:*
+    `GET /orders/SG-482910?phone=01711223344`
+
+---
+
+### 🎫 Coupons & Testimonials (`/coupons`, `/reviews`)
+
+#### 1. Validate Coupon
+`POST /coupons/validate`
+*   **Body:**
+    ```json
+    {
+      "code": "WELCOME10",
+      "subtotal": 1200
+    }
+    ```
+
+#### 2. Submit Review
+`POST /reviews`
+*   **Body:**
+    ```json
+    {
+      "productId": "64b0f9c2d1b827e8a93d7c54",
+      "rating": 5,
+      "comment": "Perfect notes, lasts all day."
+    }
+    ```
+
+---
+
+## 🚀 Getting Started Locally
+
+### Install Dependencies
+```bash
+npm install
+```
+
+### Start Development Server
+```bash
+cem dev
+```
+Server runs at `http://localhost:5000`. You can test all routes instantly using the generated Postman Collection file `subaashghor_api_postman_collection.json`.
