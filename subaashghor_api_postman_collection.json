@@ -895,6 +895,42 @@
           }
         }
       ]
+    },
+    {
+      "name": "Uploads",
+      "item": [
+        {
+          "name": "Upload Image to Cloudinary (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "folder",
+                  "value": "subaashghor/products",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/uploads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "uploads"
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

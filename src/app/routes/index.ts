@@ -8,6 +8,7 @@ import { ReviewRoutes } from '../modules/Review/review.route';
 import { CouponRoutes } from '../modules/Coupon/coupon.route';
 import { OrderRoutes } from '../modules/Order/order.route';
 import { NewslatterRoutes } from '../modules/Newslatter/newslatter.route';
+import { UploadRoutes } from '../modules/Upload/upload.route';
 // --- INJECT IMPORTS HERE ---
 
 const router = Router();
@@ -22,6 +23,7 @@ const moduleRoutes = [
   { path: '/coupons', route: CouponRoutes },
   { path: '/orders', route: OrderRoutes },
   { path: '/newsletter', route: NewslatterRoutes },
+  { path: '/uploads', route: UploadRoutes },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
