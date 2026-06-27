@@ -16,50 +16,56 @@ const getAllProducts = async (query: Record<string, any>) => {
     isAdmin = false,
   } = query;
 
-  const filterObj: Record<string, any> = {};
+  const andConditions: any[] = [];
 
   // For public client, only show active products
-  if (!isAdmin) {
-    filterObj.isActive = true;
+  if (isAdmin !== 'true') {
+    andConditions.push({ isActive: true });
   }
 
   // Category filter
   if (category) {
-    filterObj.category = category;
+    andConditions.push({ category });
   }
 
   // Collection filter
   if (collection) {
-    filterObj.collections = collection;
+    andConditions.push({ collections: collection });
   }
 
   // Price filter
   if (minPrice !== undefined || maxPrice !== undefined) {
-    filterObj.price = {};
-    if (minPrice !== undefined) filterObj.price.$gte = Number(minPrice);
-    if (maxPrice !== undefined) filterObj.price.$lte = Number(maxPrice);
+    const priceFilter: Record<string, any> = {};
+    if (minPrice !== undefined) priceFilter.$gte = Number(minPrice);
+    if (maxPrice !== undefined) priceFilter.$lte = Number(maxPrice);
+    andConditions.push({ price: priceFilter });
   }
 
   // Notes filter
   if (notes) {
     const notesArray = Array.isArray(notes) ? notes : [notes];
-    filterObj.$or = [
-      { 'notes.top': { $in: notesArray } },
-      { 'notes.heart': { $in: notesArray } },
-      { 'notes.base': { $in: notesArray } },
-    ];
+    andConditions.push({
+      $or: [
+        { 'notes.top': { $in: notesArray } },
+        { 'notes.heart': { $in: notesArray } },
+        { 'notes.base': { $in: notesArray } },
+      ],
+    });
   }
 
   // Search filter
   if (q) {
-    filterObj.$or = filterObj.$or || [];
-    filterObj.$or.push(
-      { 'name.en': { $regex: q, $options: 'i' } },
-      { 'name.bn': { $regex: q, $options: 'i' } },
-      { 'tagline.en': { $regex: q, $options: 'i' } },
-      { 'tagline.bn': { $regex: q, $options: 'i' } },
-    );
+    andConditions.push({
+      $or: [
+        { 'name.en': { $regex: q, $options: 'i' } },
+        { 'name.bn': { $regex: q, $options: 'i' } },
+        { 'tagline.en': { $regex: q, $options: 'i' } },
+        { 'tagline.bn': { $regex: q, $options: 'i' } },
+      ],
+    });
   }
+
+  const filterObj = andConditions.length > 0 ? { $and: andConditions } : {};
 
   // Sort order mapping
   let sortStr = '-createdAt';
@@ -117,10 +123,6 @@ const createProduct = async (payload: any) => {
 };
 
 const updateProduct = async (id: string, payload: any) => {
-  if (payload.name?.en && !payload.slug) {
-    payload.slug = payload.name.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  }
-
   const result = await ProductModel.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,

@@ -20,8 +20,8 @@ router.get(
 );
 
 // Admin / Management endpoints
-router.get('/', OrderController.getAllOrders);
-router.patch('/:id/status', OrderController.updateOrderStatus);
+router.get('/', auth('admin'), OrderController.getAllOrders);
+router.patch('/:id/status', auth('admin'), OrderController.updateOrderStatus);
 
 router.get(
   '/:idOrNumber',

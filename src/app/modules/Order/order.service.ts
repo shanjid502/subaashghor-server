@@ -10,7 +10,7 @@ const createOrder = async (userId: string | undefined, payload: any) => {
   let subtotal = 0;
   const processedItems = [];
 
-  // 1. Verify products, recompute price, and update stock
+  // 1. Verify products, recompute price, and update stock atomically
   for (const item of items) {
     const product = await ProductModel.findById(item.productId);
     if (!product) {
@@ -25,19 +25,28 @@ const createOrder = async (userId: string | undefined, payload: any) => {
       );
     }
 
-    if (sizeObj.stock < item.qty) {
+    // Decrement stock atomically
+    const updatedProduct = await ProductModel.findOneAndUpdate(
+      {
+        _id: item.productId,
+        'sizes.ml': Number(item.ml),
+        'sizes.stock': { $gte: item.qty },
+      },
+      {
+        $inc: { 'sizes.$.stock': -item.qty },
+      },
+      { new: true },
+    );
+
+    if (!updatedProduct) {
       throw new AppError(
         StatusCodes.UNPROCESSABLE_ENTITY,
         `${product.name.en} (${item.ml}ml) is out of stock`,
       );
     }
 
-    // Decrement stock
-    sizeObj.stock -= item.qty;
-    await product.save();
-
-    // Use verified database price (supporting salePrice if present)
-    const unitPrice = sizeObj.salePrice !== undefined ? sizeObj.salePrice : sizeObj.price;
+    // Use verified database price (supporting salePrice if present and greater than 0)
+    const unitPrice = (sizeObj.salePrice !== undefined && sizeObj.salePrice > 0) ? sizeObj.salePrice : sizeObj.price;
     const itemSubtotal = unitPrice * item.qty;
     subtotal += itemSubtotal;
 
@@ -82,9 +91,17 @@ const createOrder = async (userId: string | undefined, payload: any) => {
 
   const total = subtotal + shippingFee - discount;
 
-  // 4. Generate order number (e.g. SG-482910)
-  const randomSixDigits = Math.floor(100000 + Math.random() * 900000);
-  const orderNumber = `SG-${randomSixDigits}`;
+  // 4. Generate order number (e.g. SG-482910) with uniqueness guarantee
+  let orderNumber = '';
+  let isUnique = false;
+  while (!isUnique) {
+    const randomSixDigits = Math.floor(100000 + Math.random() * 900000);
+    orderNumber = `SG-${randomSixDigits}`;
+    const existingOrder = await OrderModel.findOne({ orderNumber });
+    if (!existingOrder) {
+      isUnique = true;
+    }
+  }
 
   const orderData: any = {
     orderNumber,

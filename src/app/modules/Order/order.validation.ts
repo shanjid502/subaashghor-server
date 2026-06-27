@@ -5,11 +5,11 @@ const createOrderSchema = z.object({
     items: z.array(
       z.object({
         productId: z.string().min(1, 'Product ID is required'),
-        slug: z.string().min(1, 'Product slug is required'),
-        name: z.string().min(1, 'Product name is required'),
-        image: z.string().url('Product image must be a valid URL'),
+        slug: z.string().optional(),
+        name: z.string().optional(),
+        image: z.string().optional(),
         ml: z.number().min(1, 'Volume in ml is required'),
-        price: z.number().min(0, 'Unit price must be positive'),
+        price: z.number().optional(),
         qty: z.number().min(1, 'Quantity must be at least 1'),
       }),
     ),
