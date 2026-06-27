@@ -130,8 +130,29 @@ const getOrderByIdOrNumber = async (userId: string | undefined, idOrNumber: stri
   return order;
 };
 
+const getAllOrders = async () => {
+  const orders = await OrderModel.find().sort({ createdAt: -1 });
+  return orders;
+};
+
+const updateOrderStatus = async (id: string, status: string) => {
+  const order = await OrderModel.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true, runValidators: true },
+  );
+
+  if (!order) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Order not found');
+  }
+
+  return order;
+};
+
 export const OrderService = {
   createOrder,
   getMyOrders,
   getOrderByIdOrNumber,
+  getAllOrders,
+  updateOrderStatus,
 };

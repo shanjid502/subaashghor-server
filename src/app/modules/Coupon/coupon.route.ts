@@ -11,4 +11,10 @@ router.post(
   CouponController.validateCoupon,
 );
 
+// Admin / Upload endpoints
+router.get('/', CouponController.getAllCoupons);
+router.post('/', CouponController.createCoupon);
+router.patch('/:id', CouponController.updateCoupon);
+router.delete('/:id', CouponController.deleteCoupon);
+
 export const CouponRoutes = router;

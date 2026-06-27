@@ -5,7 +5,6 @@ import sendResponse from '../../utils/sendResponse';
 import { OrderService } from './order.service';
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
-  // If user is authenticated, use their id. Otherwise, guest checkout.
   const userId = req.user?.userId;
   const result = await OrderService.createOrder(userId, req.body);
 
@@ -39,8 +38,30 @@ const getOrderByIdOrNumber = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllOrders = catchAsync(async (_req: Request, res: Response) => {
+  const result = await OrderService.getAllOrders();
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'All orders fetched successfully',
+    data: result,
+  });
+});
+
+const updateOrderStatus = catchAsync(async (req: Request, res: Response) => {
+  const result = await OrderService.updateOrderStatus(req.params.id, req.body.status);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Order status updated successfully',
+    data: result,
+  });
+});
+
 export const OrderController = {
   createOrder,
   getMyOrders,
   getOrderByIdOrNumber,
+  getAllOrders,
+  updateOrderStatus,
 };

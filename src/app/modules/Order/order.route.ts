@@ -19,6 +19,10 @@ router.get(
   OrderController.getMyOrders,
 );
 
+// Admin / Management endpoints
+router.get('/', OrderController.getAllOrders);
+router.patch('/:id/status', OrderController.updateOrderStatus);
+
 router.get(
   '/:idOrNumber',
   optionalAuth,

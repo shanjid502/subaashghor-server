@@ -24,7 +24,40 @@ const getCollectionBySlug = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createCollection = catchAsync(async (req: Request, res: Response) => {
+  const result = await CollectionService.createCollection(req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: 'Collection created successfully',
+    data: result,
+  });
+});
+
+const updateCollection = catchAsync(async (req: Request, res: Response) => {
+  const result = await CollectionService.updateCollection(req.params.id, req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Collection updated successfully',
+    data: result,
+  });
+});
+
+const deleteCollection = catchAsync(async (req: Request, res: Response) => {
+  const result = await CollectionService.deleteCollection(req.params.id);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Collection deleted successfully',
+    data: result,
+  });
+});
+
 export const CollectionController = {
   getAllCollections,
   getCollectionBySlug,
+  createCollection,
+  updateCollection,
+  deleteCollection,
 };

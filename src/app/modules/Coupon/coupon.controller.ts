@@ -15,6 +15,50 @@ const validateCoupon = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllCoupons = catchAsync(async (_req: Request, res: Response) => {
+  const result = await CouponService.getAllCoupons();
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Coupons fetched successfully',
+    data: result,
+  });
+});
+
+const createCoupon = catchAsync(async (req: Request, res: Response) => {
+  const result = await CouponService.createCoupon(req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: 'Coupon created successfully',
+    data: result,
+  });
+});
+
+const updateCoupon = catchAsync(async (req: Request, res: Response) => {
+  const result = await CouponService.updateCoupon(req.params.id, req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Coupon updated successfully',
+    data: result,
+  });
+});
+
+const deleteCoupon = catchAsync(async (req: Request, res: Response) => {
+  const result = await CouponService.deleteCoupon(req.params.id);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Coupon deleted successfully',
+    data: result,
+  });
+});
+
 export const CouponController = {
   validateCoupon,
+  getAllCoupons,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
 };

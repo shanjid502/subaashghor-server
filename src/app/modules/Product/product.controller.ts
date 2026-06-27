@@ -35,8 +35,41 @@ const getProductBySlug = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createProduct = catchAsync(async (req: Request, res: Response) => {
+  const result = await ProductService.createProduct(req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: 'Product created successfully',
+    data: result,
+  });
+});
+
+const updateProduct = catchAsync(async (req: Request, res: Response) => {
+  const result = await ProductService.updateProduct(req.params.id, req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Product updated successfully',
+    data: result,
+  });
+});
+
+const deleteProduct = catchAsync(async (req: Request, res: Response) => {
+  const result = await ProductService.deleteProduct(req.params.id);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Product deleted successfully',
+    data: result,
+  });
+});
+
 export const ProductController = {
   getAllProducts,
   getFeaturedProducts,
   getProductBySlug,
+  createProduct,
+  updateProduct,
+  deleteProduct,
 };

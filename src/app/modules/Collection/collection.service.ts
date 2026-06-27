@@ -25,7 +25,7 @@ const getAllCollections = async () => {
 };
 
 const getCollectionBySlug = async (slug: string) => {
-  const collection = await CollectionModel.findOne({ slug, isActive: true });
+  const collection = await CollectionModel.findOne({ slug });
   if (!collection) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Collection not found');
   }
@@ -41,7 +41,49 @@ const getCollectionBySlug = async (slug: string) => {
   };
 };
 
+const createCollection = async (payload: any) => {
+  if (!payload.slug && payload.name?.en) {
+    payload.slug = payload.name.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  const existing = await CollectionModel.findOne({ slug: payload.slug });
+  if (existing) {
+    throw new AppError(StatusCodes.CONFLICT, 'Collection with this slug already exists');
+  }
+
+  const result = await CollectionModel.create(payload);
+  return result;
+};
+
+const updateCollection = async (id: string, payload: any) => {
+  if (payload.name?.en && !payload.slug) {
+    payload.slug = payload.name.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
+  const result = await CollectionModel.findByIdAndUpdate(id, payload, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!result) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Collection not found');
+  }
+
+  return result;
+};
+
+const deleteCollection = async (id: string) => {
+  const result = await CollectionModel.findByIdAndDelete(id);
+  if (!result) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Collection not found');
+  }
+  return result;
+};
+
 export const CollectionService = {
   getAllCollections,
   getCollectionBySlug,
+  createCollection,
+  updateCollection,
+  deleteCollection,
 };

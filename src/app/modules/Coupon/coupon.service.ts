@@ -26,6 +26,46 @@ const validateCoupon = async (code: string, subtotal: number) => {
   return coupon;
 };
 
+const getAllCoupons = async () => {
+  const coupons = await CouponModel.find().sort({ createdAt: -1 });
+  return coupons;
+};
+
+const createCoupon = async (payload: any) => {
+  const existing = await CouponModel.findOne({ code: payload.code.trim().toUpperCase() });
+  if (existing) {
+    throw new AppError(StatusCodes.CONFLICT, 'Coupon code already exists');
+  }
+
+  const result = await CouponModel.create(payload);
+  return result;
+};
+
+const updateCoupon = async (id: string, payload: any) => {
+  const result = await CouponModel.findByIdAndUpdate(id, payload, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!result) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Coupon not found');
+  }
+
+  return result;
+};
+
+const deleteCoupon = async (id: string) => {
+  const result = await CouponModel.findByIdAndDelete(id);
+  if (!result) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Coupon not found');
+  }
+  return result;
+};
+
 export const CouponService = {
   validateCoupon,
+  getAllCoupons,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
 };
