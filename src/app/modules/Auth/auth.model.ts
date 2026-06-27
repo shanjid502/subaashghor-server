@@ -46,16 +46,17 @@ const userSchema = new Schema<IUser>(
     },
     email: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
     },
     phone: {
       type: String,
+      required: true,
       unique: true,
-      sparse: true,
+      trim: true,
     },
     passwordHash: {
       type: String,
@@ -137,7 +138,7 @@ export const UserModel = model<IUser>('User', userSchema);
 export interface IOtpToken {
   phone: string;
   codeHash: string;
-  purpose: 'login' | 'signup' | 'verify';
+  purpose: 'login' | 'signup' | 'verify' | 'reset-password';
   attempts: number;
   expiresAt: Date;
   consumedAt?: Date;
@@ -147,7 +148,7 @@ const otpTokenSchema = new Schema<IOtpToken>(
   {
     phone: { type: String, required: true, index: true },
     codeHash: { type: String, required: true },
-    purpose: { type: String, enum: ['login', 'signup', 'verify'], required: true },
+    purpose: { type: String, enum: ['login', 'signup', 'verify', 'reset-password'], required: true },
     attempts: { type: Number, default: 0, max: 5 },
     expiresAt: { type: Date, required: true },
     consumedAt: Date,

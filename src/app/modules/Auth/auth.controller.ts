@@ -70,11 +70,11 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 });
 
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.forgotPassword(req.body.email);
+  const result = await AuthService.forgotPassword(req.body);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'If a matching email exists, a reset link was sent.',
+    message: 'If a matching user exists, the reset code or link has been dispatched.',
     data: result,
   });
 });
@@ -82,6 +82,8 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.resetPassword({
     token: req.body.token,
+    phone: req.body.phone,
+    code: req.body.code,
     passwordHash: req.body.password,
   });
   sendResponse(res, {
@@ -93,7 +95,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 const requestOtp = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.requestOtp(req.body.phone);
+  const result = await AuthService.requestOtp(req.body.phone, req.body.purpose);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -103,7 +105,7 @@ const requestOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.verifyOtp(req.body.phone, req.body.code);
+  const result = await AuthService.verifyOtp(req.body.phone, req.body.code, req.body.purpose);
   res.cookie('sg_session', result.accessToken, cookieOptions);
 
   sendResponse(res, {

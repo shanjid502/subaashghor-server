@@ -7,16 +7,25 @@ import { UserModel, OtpTokenModel } from './auth.model';
 import bcrypt from 'bcrypt';
 
 const signupUser = async (payload: TSignupUser) => {
-  const existingUser = await UserModel.findOne({ email: payload.email });
-  if (existingUser) {
-    throw new AppError(StatusCodes.CONFLICT, 'Email already registered.');
+  // Check unique phone number
+  const existingUserByPhone = await UserModel.findOne({ phone: payload.phone });
+  if (existingUserByPhone) {
+    throw new AppError(StatusCodes.CONFLICT, 'Phone number already registered.');
+  }
+
+  // Check unique email (if provided)
+  if (payload.email) {
+    const existingUserByEmail = await UserModel.findOne({ email: payload.email });
+    if (existingUserByEmail) {
+      throw new AppError(StatusCodes.CONFLICT, 'Email already registered.');
+    }
   }
 
   const newUser = await UserModel.create({
     name: payload.name,
-    email: payload.email,
+    email: payload.email || undefined,
     phone: payload.phone,
-    passwordHash: payload.password, // Schema hook hashes this
+    passwordHash: payload.password || undefined,
     role: 'customer',
   });
 
@@ -38,14 +47,25 @@ const signupUser = async (payload: TSignupUser) => {
 };
 
 const loginUser = async (payload: TLoginUser) => {
-  const user = await UserModel.findOne({ email: payload.email }).select('+passwordHash');
+  let user = null;
+
+  if (payload.phone) {
+    user = await UserModel.findOne({ phone: payload.phone }).select('+passwordHash');
+  } else if (payload.email) {
+    user = await UserModel.findOne({ email: payload.email }).select('+passwordHash');
+  }
+
   if (!user) {
-    throw new AppError(StatusCodes.UNAUTHORIZED, 'Incorrect email or password.');
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Incorrect phone/email or password.');
+  }
+
+  if (!payload.password) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Password is required to log in via password.');
   }
 
   const isPasswordMatch = await user.comparePassword(payload.password);
   if (!isPasswordMatch) {
-    throw new AppError(StatusCodes.UNAUTHORIZED, 'Incorrect email or password.');
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Incorrect phone/email or password.');
   }
 
   const jwtPayload = {
@@ -65,44 +85,108 @@ const loginUser = async (payload: TLoginUser) => {
   };
 };
 
-const forgotPassword = async (email: string) => {
-  const user = await UserModel.findOne({ email });
-  if (!user) {
-    // Return success to prevent email enumeration
-    return { ok: true };
+const forgotPassword = async (payload: { email?: string; phone?: string }) => {
+  if (payload.phone) {
+    const user = await UserModel.findOne({ phone: payload.phone });
+    if (!user) {
+      return { ok: true }; // Prevent user enumeration
+    }
+
+    // Generate a reset-password OTP
+    const code = '1234'; // Standard mock OTP for local/testing
+    const codeHash = await bcrypt.hash(code, 8);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes TTL
+
+    await OtpTokenModel.create({
+      phone: payload.phone,
+      codeHash,
+      purpose: 'reset-password',
+      expiresAt,
+    });
+
+    console.log(`📱 SENT SMS OTP to ${payload.phone} for password reset: Code is ${code}`);
+    return { sent: true, via: 'phone' };
+  } else if (payload.email) {
+    const user = await UserModel.findOne({ email: payload.email });
+    if (!user) {
+      return { ok: true }; // Prevent user enumeration
+    }
+
+    const resetToken = createToken(
+      { userId: String(user._id), role: user.role },
+      config.password_reset_secret as string,
+      config.password_reset_secret_expires_in as string,
+    );
+
+    console.log(`🔑 PASSWORD RESET LINK: http://localhost:5173/reset-password?token=${resetToken}`);
+    return { sent: true, via: 'email' };
   }
 
-  // Generate a short reset token valid for 15m
-  const resetToken = createToken(
-    { userId: String(user._id), role: user.role },
-    config.password_reset_secret as string,
-    config.password_reset_secret_expires_in as string,
-  );
-
-  // In development, log the reset token link
-  console.log(`🔑 PASSWORD RESET LINK: http://localhost:5173/reset-password?token=${resetToken}`);
-
-  return { ok: true };
+  throw new AppError(StatusCodes.BAD_REQUEST, 'Either email or phone is required.');
 };
 
-const resetPassword = async (payload: { token: string; passwordHash: string }) => {
-  try {
-    const decoded = verifyToken(payload.token, config.password_reset_secret as string);
-    const user = await UserModel.findById(decoded.userId);
+const resetPassword = async (payload: {
+  token?: string;
+  phone?: string;
+  code?: string;
+  passwordHash: string;
+}) => {
+  if (payload.token) {
+    try {
+      const decoded = verifyToken(payload.token, config.password_reset_secret as string);
+      const user = await UserModel.findById(decoded.userId);
+      if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      user.passwordHash = payload.passwordHash;
+      await user.save();
+      return { ok: true };
+    } catch {
+      throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired reset token');
+    }
+  } else if (payload.phone && payload.code) {
+    const token = await OtpTokenModel.findOne({
+      phone: payload.phone,
+      purpose: 'reset-password',
+      consumedAt: { $exists: false },
+      expiresAt: { $gt: new Date() },
+    }).sort({ createdAt: -1 });
+
+    if (!token) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid or expired OTP');
+    }
+
+    token.attempts += 1;
+    await token.save();
+
+    if (token.attempts > 5) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Too many invalid attempts');
+    }
+
+    const isMatch = await bcrypt.compare(payload.code, token.codeHash);
+    if (!isMatch) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect OTP code');
+    }
+
+    token.consumedAt = new Date();
+    await token.save();
+
+    const user = await UserModel.findOne({ phone: payload.phone });
     if (!user) {
       throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
     }
 
-    user.passwordHash = payload.passwordHash; // Schema pre-save hook will hash
+    user.passwordHash = payload.passwordHash;
     await user.save();
 
     return { ok: true };
-  } catch (error) {
-    throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired reset token');
   }
+
+  throw new AppError(StatusCodes.BAD_REQUEST, 'Token or Phone/OTP is required.');
 };
 
-const requestOtp = async (phone: string) => {
+const requestOtp = async (phone: string, purpose: 'login' | 'signup' | 'verify' | 'reset-password' = 'login') => {
   const code = '1234'; // Standard mock OTP for local/testing
   const codeHash = await bcrypt.hash(code, 8);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes TTL
@@ -110,11 +194,11 @@ const requestOtp = async (phone: string) => {
   await OtpTokenModel.create({
     phone,
     codeHash,
-    purpose: 'login',
+    purpose,
     expiresAt,
   });
 
-  console.log(`📱 SENT SMS OTP to ${phone}: Code is ${code}`);
+  console.log(`📱 SENT SMS OTP to ${phone} for ${purpose}: Code is ${code}`);
 
   return {
     sent: true,
@@ -123,9 +207,10 @@ const requestOtp = async (phone: string) => {
   };
 };
 
-const verifyOtp = async (phone: string, code: string) => {
+const verifyOtp = async (phone: string, code: string, purpose: 'login' | 'signup' | 'verify' | 'reset-password' = 'login') => {
   const token = await OtpTokenModel.findOne({
     phone,
+    purpose,
     consumedAt: { $exists: false },
     expiresAt: { $gt: new Date() },
   }).sort({ createdAt: -1 });
@@ -155,10 +240,12 @@ const verifyOtp = async (phone: string, code: string) => {
     user = await UserModel.create({
       name: `User ${phone.slice(-4)}`,
       phone,
-      email: `${phone.replace('+', '')}@subaashghor.mock`, // Dummy email
       role: 'customer',
       phoneVerified: true,
     });
+  } else {
+    user.phoneVerified = true;
+    await user.save();
   }
 
   const jwtPayload = {

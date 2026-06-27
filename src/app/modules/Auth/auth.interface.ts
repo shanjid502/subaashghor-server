@@ -1,13 +1,14 @@
 export type TLoginUser = {
-  email: string;
-  password: string;
+  email?: string;
+  phone?: string;
+  password?: string;
 };
 
 export type TUserRole = 'customer' | 'admin';
 
 export type TSignupUser = {
   name: string;
-  email: string;
+  email?: string;
   password?: string;
-  phone?: string;
+  phone: string;
 };
