@@ -63,6 +63,13 @@ const loginUser = async (payload: TLoginUser) => {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Password is required to log in via password.');
   }
 
+  if (!user.passwordHash) {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      'This account does not have a password set. Please log in using OTP verification.',
+    );
+  }
+
   const isPasswordMatch = await user.comparePassword(payload.password);
   if (!isPasswordMatch) {
     throw new AppError(StatusCodes.UNAUTHORIZED, 'Incorrect phone/email or password.');
@@ -92,8 +99,10 @@ const forgotPassword = async (payload: { email?: string; phone?: string }) => {
       return { ok: true }; // Prevent user enumeration
     }
 
-    // Generate a reset-password OTP
-    const code = '1234'; // Standard mock OTP for local/testing
+    // Generate a reset-password OTP (secure in production)
+    const code = config.NODE_ENV === 'production'
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : '1234';
     const codeHash = await bcrypt.hash(code, 8);
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes TTL
 
@@ -104,7 +113,9 @@ const forgotPassword = async (payload: { email?: string; phone?: string }) => {
       expiresAt,
     });
 
-    console.log(`📱 SENT SMS OTP to ${payload.phone} for password reset: Code is ${code}`);
+    if (config.NODE_ENV === 'development') {
+      console.log(`📱 SENT SMS OTP to ${payload.phone} for password reset: Code is ${code}`);
+    }
     return { sent: true, via: 'phone' };
   } else if (payload.email) {
     const user = await UserModel.findOne({ email: payload.email });
@@ -118,7 +129,9 @@ const forgotPassword = async (payload: { email?: string; phone?: string }) => {
       config.password_reset_secret_expires_in as string,
     );
 
-    console.log(`🔑 PASSWORD RESET LINK: http://localhost:5173/reset-password?token=${resetToken}`);
+    if (config.NODE_ENV === 'development') {
+      console.log(`🔑 PASSWORD RESET LINK: http://localhost:5173/reset-password?token=${resetToken}`);
+    }
     return { sent: true, via: 'email' };
   }
 
@@ -187,7 +200,10 @@ const resetPassword = async (payload: {
 };
 
 const requestOtp = async (phone: string, purpose: 'login' | 'signup' | 'verify' | 'reset-password' = 'login') => {
-  const code = '1234'; // Standard mock OTP for local/testing
+  // Use cryptographically secure 6-digit random code in production, 1234 in development
+  const code = config.NODE_ENV === 'production'
+    ? Math.floor(100000 + Math.random() * 900000).toString()
+    : '1234';
   const codeHash = await bcrypt.hash(code, 8);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes TTL
 
@@ -198,7 +214,9 @@ const requestOtp = async (phone: string, purpose: 'login' | 'signup' | 'verify' 
     expiresAt,
   });
 
-  console.log(`📱 SENT SMS OTP to ${phone} for ${purpose}: Code is ${code}`);
+  if (config.NODE_ENV === 'development') {
+    console.log(`📱 SENT SMS OTP to ${phone} for ${purpose}: Code is ${code}`);
+  }
 
   return {
     sent: true,

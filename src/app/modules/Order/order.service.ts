@@ -9,56 +9,80 @@ const createOrder = async (userId: string | undefined, payload: any) => {
 
   let subtotal = 0;
   const processedItems = [];
+  const decrementedItems: { productId: string; ml: number; qty: number }[] = [];
 
-  // 1. Verify products, recompute price, and update stock atomically
-  for (const item of items) {
-    const product = await ProductModel.findById(item.productId);
-    if (!product) {
-      throw new AppError(StatusCodes.NOT_FOUND, `Product not found: ${item.productId}`);
+  try {
+    // 1. Verify products, recompute price, and update stock atomically
+    for (const item of items) {
+      const product = await ProductModel.findById(item.productId);
+      if (!product) {
+        throw new AppError(StatusCodes.NOT_FOUND, `Product not found: ${item.productId}`);
+      }
+
+      const sizeObj = product.sizes.find((s) => s.ml === Number(item.ml));
+      if (!sizeObj) {
+        throw new AppError(
+          StatusCodes.BAD_REQUEST,
+          `Invalid size ${item.ml}ml for product ${product.name.en}`,
+        );
+      }
+
+      // Decrement stock atomically
+      const updatedProduct = await ProductModel.findOneAndUpdate(
+        {
+          _id: item.productId,
+          'sizes.ml': Number(item.ml),
+          'sizes.stock': { $gte: item.qty },
+        },
+        {
+          $inc: { 'sizes.$.stock': -item.qty },
+        },
+        { new: true },
+      );
+
+      if (!updatedProduct) {
+        throw new AppError(
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          `${product.name.en} (${item.ml}ml) is out of stock`,
+        );
+      }
+
+      // Track successful decrement for possible rollback
+      decrementedItems.push({
+        productId: item.productId,
+        ml: Number(item.ml),
+        qty: item.qty,
+      });
+
+      // Use verified database price (supporting salePrice if present and greater than 0)
+      const unitPrice = (sizeObj.salePrice !== undefined && sizeObj.salePrice > 0) ? sizeObj.salePrice : sizeObj.price;
+      const itemSubtotal = unitPrice * item.qty;
+      subtotal += itemSubtotal;
+
+      processedItems.push({
+        productId: product._id,
+        slug: product.slug,
+        name: product.name.en, // localise at order-time
+        image: product.images[0],
+        ml: Number(item.ml),
+        price: unitPrice,
+        qty: item.qty,
+      });
     }
-
-    const sizeObj = product.sizes.find((s) => s.ml === Number(item.ml));
-    if (!sizeObj) {
-      throw new AppError(
-        StatusCodes.BAD_REQUEST,
-        `Invalid size ${item.ml}ml for product ${product.name.en}`,
+  } catch (error) {
+    // Rollback any stock that was already decremented during this attempt
+    for (const roll of decrementedItems) {
+      await ProductModel.findOneAndUpdate(
+        {
+          _id: roll.productId,
+          'sizes.ml': roll.ml,
+        },
+        {
+          $inc: { 'sizes.$.stock': roll.qty },
+        },
       );
     }
-
-    // Decrement stock atomically
-    const updatedProduct = await ProductModel.findOneAndUpdate(
-      {
-        _id: item.productId,
-        'sizes.ml': Number(item.ml),
-        'sizes.stock': { $gte: item.qty },
-      },
-      {
-        $inc: { 'sizes.$.stock': -item.qty },
-      },
-      { new: true },
-    );
-
-    if (!updatedProduct) {
-      throw new AppError(
-        StatusCodes.UNPROCESSABLE_ENTITY,
-        `${product.name.en} (${item.ml}ml) is out of stock`,
-      );
-    }
-
-    // Use verified database price (supporting salePrice if present and greater than 0)
-    const unitPrice = (sizeObj.salePrice !== undefined && sizeObj.salePrice > 0) ? sizeObj.salePrice : sizeObj.price;
-    const itemSubtotal = unitPrice * item.qty;
-    subtotal += itemSubtotal;
-
-    processedItems.push({
-      productId: product._id,
-      slug: product.slug,
-      name: product.name.en, // localise at order-time
-      image: product.images[0],
-      ml: Number(item.ml),
-      price: unitPrice,
-      qty: item.qty,
-    });
+    throw error;
   }
 
   // 2. Shipping fee logic (free shipping for order >= 3000 BDT, else 130 BDT)
@@ -89,7 +113,8 @@ const createOrder = async (userId: string | undefined, payload: any) => {
     }
   }
 
-  const total = subtotal + shippingFee - discount;
+  // Ensure total does not fall below zero
+  const total = Math.max(0, subtotal + shippingFee - discount);
 
   // 4. Generate order number (e.g. SG-482910) with uniqueness guarantee
   let orderNumber = '';
@@ -130,7 +155,11 @@ const getMyOrders = async (userId: string) => {
   return orders;
 };
 
-const getOrderByIdOrNumber = async (userId: string | undefined, idOrNumber: string) => {
+const getOrderByIdOrNumber = async (
+  userPayload: { userId: string; role: string } | undefined,
+  idOrNumber: string,
+  phoneQuery?: string,
+) => {
   const isObjectId = idOrNumber.match(/^[0-9a-fA-F]{24}$/);
   const query = isObjectId ? { _id: idOrNumber } : { orderNumber: idOrNumber };
 
@@ -139,9 +168,28 @@ const getOrderByIdOrNumber = async (userId: string | undefined, idOrNumber: stri
     throw new AppError(StatusCodes.NOT_FOUND, 'Order not found');
   }
 
-  // Ownership verification: if order has userId and requester is logged in, must match
-  if (order.userId && userId && String(order.userId) !== userId) {
-    throw new AppError(StatusCodes.FORBIDDEN, 'Unauthorized access to this order');
+  // Admins can see everything
+  if (userPayload?.role === 'admin') {
+    return order;
+  }
+
+  // If order is bound to a registered user
+  if (order.userId) {
+    if (!userPayload || String(order.userId) !== userPayload.userId) {
+      throw new AppError(StatusCodes.FORBIDDEN, 'Unauthorized access to this order');
+    }
+    return order;
+  }
+
+  // If guest order, verify phone number matches shipping phone to prevent brute forcing
+  const cleanShippingPhone = order.shipping.phone.replace(/[^0-9]/g, '');
+  const cleanQueryPhone = phoneQuery ? phoneQuery.replace(/[^0-9]/g, '') : '';
+
+  if (!phoneQuery || cleanShippingPhone !== cleanQueryPhone) {
+    throw new AppError(
+      StatusCodes.FORBIDDEN,
+      'Unauthorized access: Phone number verification required for guest orders',
+    );
   }
 
   return order;

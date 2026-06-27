@@ -7,7 +7,7 @@ const getAllPosts = async (query: Record<string, any>) => {
 
   const filterObj: Record<string, any> = {};
 
-  if (!isAdmin) {
+  if (isAdmin !== 'true') {
     filterObj.published = true;
   }
 
@@ -70,10 +70,6 @@ const createPost = async (payload: any) => {
 };
 
 const updatePost = async (id: string, payload: any) => {
-  if (payload.title?.en && !payload.slug) {
-    payload.slug = payload.title.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  }
-
   const result = await PostModel.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,

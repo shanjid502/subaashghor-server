@@ -27,8 +27,11 @@ const getMyOrders = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getOrderByIdOrNumber = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const result = await OrderService.getOrderByIdOrNumber(userId, req.params.idOrNumber);
+  const result = await OrderService.getOrderByIdOrNumber(
+    req.user,
+    req.params.idOrNumber,
+    req.query.phone as string | undefined,
+  );
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,

@@ -55,12 +55,13 @@ const getAllProducts = async (query: Record<string, any>) => {
 
   // Search filter
   if (q) {
+    const escapedQuery = String(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     andConditions.push({
       $or: [
-        { 'name.en': { $regex: q, $options: 'i' } },
-        { 'name.bn': { $regex: q, $options: 'i' } },
-        { 'tagline.en': { $regex: q, $options: 'i' } },
-        { 'tagline.bn': { $regex: q, $options: 'i' } },
+        { 'name.en': { $regex: escapedQuery, $options: 'i' } },
+        { 'name.bn': { $regex: escapedQuery, $options: 'i' } },
+        { 'tagline.en': { $regex: escapedQuery, $options: 'i' } },
+        { 'tagline.bn': { $regex: escapedQuery, $options: 'i' } },
       ],
     });
   }

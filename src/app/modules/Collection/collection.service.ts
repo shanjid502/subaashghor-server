@@ -56,10 +56,6 @@ const createCollection = async (payload: any) => {
 };
 
 const updateCollection = async (id: string, payload: any) => {
-  if (payload.name?.en && !payload.slug) {
-    payload.slug = payload.name.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  }
-
   const result = await CollectionModel.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
