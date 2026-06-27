@@ -6,6 +6,7 @@ import { TLoginUser, TSignupUser } from './auth.interface';
 import { UserModel, OtpTokenModel } from './auth.model';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
+import { runInTransaction } from '../../utils/transaction';
 
 const signupUser = async (payload: TSignupUser) => {
   // Check unique phone number
@@ -183,10 +184,7 @@ const resetPassword = async (payload: {
       throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect OTP code');
     }
 
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
-
+    await runInTransaction(async (session) => {
       token.consumedAt = new Date();
       await token.save({ session });
 
@@ -197,16 +195,9 @@ const resetPassword = async (payload: {
 
       user.passwordHash = payload.passwordHash;
       await user.save({ session });
+    });
 
-      await session.commitTransaction();
-      await session.endSession();
-
-      return { ok: true };
-    } catch (error) {
-      await session.abortTransaction();
-      await session.endSession();
-      throw error;
-    }
+    return { ok: true };
   }
 
   throw new AppError(StatusCodes.BAD_REQUEST, 'Token or Phone/OTP is required.');
@@ -262,10 +253,7 @@ const verifyOtp = async (phone: string, code: string, purpose: 'login' | 'signup
     throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect OTP code');
   }
 
-  const session = await mongoose.startSession();
-  try {
-    session.startTransaction();
-
+  const result = await runInTransaction(async (session) => {
     token.consumedAt = new Date();
     await token.save({ session });
 
@@ -288,30 +276,24 @@ const verifyOtp = async (phone: string, code: string, purpose: 'login' | 'signup
       user.phoneVerified = true;
       await user.save({ session });
     }
+    return user;
+  });
 
-    await session.commitTransaction();
-    await session.endSession();
+  const jwtPayload = {
+    userId: String(result._id),
+    role: result.role,
+  };
 
-    const jwtPayload = {
-      userId: String(user._id),
-      role: user.role,
-    };
+  const accessToken = createToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string,
+  );
 
-    const accessToken = createToken(
-      jwtPayload,
-      config.jwt_access_secret as string,
-      config.jwt_access_expires_in as string,
-    );
-
-    return {
-      accessToken,
-      user,
-    };
-  } catch (error) {
-    await session.abortTransaction();
-    await session.endSession();
-    throw error;
-  }
+  return {
+    accessToken,
+    user: result,
+  };
 };
 
 export const AuthService = {
