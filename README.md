@@ -218,6 +218,29 @@ All requests are prefixed with `http://localhost:5000/api/v1`.
 
 ---
 
+### ☁️ File Uploads (`/uploads`)
+
+#### 1. Upload Image to Cloudinary (Admin Only)
+`POST /uploads`
+*   **Headers:** `Authorization: Bearer <Admin JWT>`
+*   **Content-Type:** `multipart/form-data`
+*   **Form Data Fields:**
+    *   `file`: The binary image file (max 5MB).
+    *   `folder` (optional): The target Cloudinary folder name (defaults to `subaashghor/general`).
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Image uploaded successfully",
+      "data": {
+        "url": "https://res.cloudinary.com/your_cloud/image/upload/v12345/subaashghor/products/example.jpg",
+        "publicId": "subaashghor/products/example"
+      }
+    }
+    ```
+
+---
+
 ## 🚀 Getting Started Locally
 
 ### Install Dependencies

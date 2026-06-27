@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { uploadBuffer } from '../../utils/cloudinary';
+import { UploadService } from './upload.service';
 
 const uploadImage = catchAsync(async (req: Request, res: Response) => {
   if (!req.file) {
@@ -13,8 +13,8 @@ const uploadImage = catchAsync(async (req: Request, res: Response) => {
   // Get the target folder or default to general
   const folder = req.body.folder || 'subaashghor/general';
 
-  // Upload file buffer to Cloudinary
-  const uploadResult = await uploadBuffer(req.file.buffer, folder);
+  // Upload file buffer to Cloudinary via Service
+  const uploadResult = await UploadService.uploadImage(req.file.buffer, folder);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
