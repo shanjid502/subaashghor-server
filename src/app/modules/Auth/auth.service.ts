@@ -5,6 +5,7 @@ import { createToken, verifyToken } from '../../utils/jwt.utils';
 import { TLoginUser, TSignupUser } from './auth.interface';
 import { UserModel, OtpTokenModel } from './auth.model';
 import bcrypt from 'bcrypt';
+import mongoose from 'mongoose';
 
 const signupUser = async (payload: TSignupUser) => {
   // Check unique phone number
@@ -182,18 +183,30 @@ const resetPassword = async (payload: {
       throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect OTP code');
     }
 
-    token.consumedAt = new Date();
-    await token.save();
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
 
-    const user = await UserModel.findOne({ phone: payload.phone });
-    if (!user) {
-      throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+      token.consumedAt = new Date();
+      await token.save({ session });
+
+      const user = await UserModel.findOne({ phone: payload.phone }).session(session);
+      if (!user) {
+        throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+      }
+
+      user.passwordHash = payload.passwordHash;
+      await user.save({ session });
+
+      await session.commitTransaction();
+      await session.endSession();
+
+      return { ok: true };
+    } catch (error) {
+      await session.abortTransaction();
+      await session.endSession();
+      throw error;
     }
-
-    user.passwordHash = payload.passwordHash;
-    await user.save();
-
-    return { ok: true };
   }
 
   throw new AppError(StatusCodes.BAD_REQUEST, 'Token or Phone/OTP is required.');
@@ -249,38 +262,56 @@ const verifyOtp = async (phone: string, code: string, purpose: 'login' | 'signup
     throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect OTP code');
   }
 
-  token.consumedAt = new Date();
-  await token.save();
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
 
-  // Find or create the user by phone
-  let user = await UserModel.findOne({ phone });
-  if (!user) {
-    user = await UserModel.create({
-      name: `User ${phone.slice(-4)}`,
-      phone,
-      role: 'customer',
-      phoneVerified: true,
-    });
-  } else {
-    user.phoneVerified = true;
-    await user.save();
+    token.consumedAt = new Date();
+    await token.save({ session });
+
+    // Find or create the user by phone
+    let user = await UserModel.findOne({ phone }).session(session);
+    if (!user) {
+      const createdUsers = await UserModel.create(
+        [
+          {
+            name: `User ${phone.slice(-4)}`,
+            phone,
+            role: 'customer',
+            phoneVerified: true,
+          },
+        ],
+        { session },
+      );
+      user = createdUsers[0];
+    } else {
+      user.phoneVerified = true;
+      await user.save({ session });
+    }
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    const jwtPayload = {
+      userId: String(user._id),
+      role: user.role,
+    };
+
+    const accessToken = createToken(
+      jwtPayload,
+      config.jwt_access_secret as string,
+      config.jwt_access_expires_in as string,
+    );
+
+    return {
+      accessToken,
+      user,
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
+    throw error;
   }
-
-  const jwtPayload = {
-    userId: String(user._id),
-    role: user.role,
-  };
-
-  const accessToken = createToken(
-    jwtPayload,
-    config.jwt_access_secret as string,
-    config.jwt_access_expires_in as string,
-  );
-
-  return {
-    accessToken,
-    user,
-  };
 };
 
 export const AuthService = {
