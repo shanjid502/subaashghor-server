@@ -1,0 +1,900 @@
+{
+  "info": {
+    "_postman_id": "subaashghor-api-collection",
+    "name": "Subaashghor API",
+    "description": "API collection for testing all routes in the Subaashghor e-commerce server.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup User (OTP-First/Optional Email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"phone\": \"01712345678\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"01712345678\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Request OTP (Login/Signup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"01712345678\",\n  \"purpose\": \"login\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/phone/request-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "phone",
+                "request-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"01712345678\",\n  \"code\": \"1234\",\n  \"purpose\": \"login\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/phone/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "phone",
+                "verify-otp"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Profile Info (Get Me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password Request (OTP or Email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"01712345678\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reset Password with OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"01712345678\",\n  \"code\": \"1234\",\n  \"password\": \"newPassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&limit=20&category=unisex&sort=newest&q=",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "unisex"
+                },
+                {
+                  "key": "sort",
+                  "value": "newest"
+                },
+                {
+                  "key": "q",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Featured Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/featured",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "featured"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product By Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/oud-royal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "oud-royal"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Product (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": {\n    \"en\": \"Sandal Wood Supreme\",\n    \"bn\": \"স্যান্ডাল উড সুপ্রিম\"\n  },\n  \"tagline\": {\n    \"en\": \"Pure woody bliss\",\n    \"bn\": \"বিশুদ্ধ কাঠের সুবাস\"\n  },\n  \"description\": {\n    \"en\": \"Premium quality natural sandalwood perfume oil.\",\n    \"bn\": \"উন্নত মানের প্রাকৃতিক চন্দন কাঠের আতর।\"\n  },\n  \"images\": [\n    \"https://res.cloudinary.com/demo/image/upload/sample.jpg\"\n  ],\n  \"price\": 1200,\n  \"salePrice\": 950,\n  \"category\": \"unisex\",\n  \"collections\": [\n    \"premium\"\n  ],\n  \"sizes\": [\n    {\n      \"ml\": 3,\n      \"price\": 600,\n      \"stock\": 50\n    },\n    {\n      \"ml\": 6,\n      \"price\": 1200,\n      \"salePrice\": 950,\n      \"stock\": 30\n    }\n  ],\n  \"notes\": {\n    \"top\": [\"Sandalwood\", \"Bergamot\"],\n    \"heart\": [\"Amber\", \"Cedar\"],\n    \"base\": [\"Musk\", \"Vanilla\"]\n  },\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Product (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 1300,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/PRODUCT_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "PRODUCT_ID_HERE"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/PRODUCT_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "PRODUCT_ID_HERE"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collections",
+      "item": [
+        {
+          "name": "Get All Collections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collections"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Collection By Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collections/premium",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collections",
+                "premium"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Collection (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": {\n    \"en\": \"Premium Elixirs\",\n    \"bn\": \"প্রিমিয়াম এলিক্সির\"\n  },\n  \"description\": {\n    \"en\": \"Exquisite blends of royal oils\",\n    \"bn\": \"রাজকীয় তেলের চমৎকার মিশ্রণ\"\n  },\n  \"image\": \"https://res.cloudinary.com/demo/image/upload/sample.jpg\",\n  \"isActive\": true,\n  \"order\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collections"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Collection (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/collections/COLLECTION_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collections",
+                "COLLECTION_ID_HERE"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Collection (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/collections/COLLECTION_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "collections",
+                "COLLECTION_ID_HERE"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coupons",
+      "item": [
+        {
+          "name": "Validate Coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME10\",\n  \"subtotal\": 1500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/coupons/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "coupons",
+                "validate"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Coupons (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "coupons"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Coupon (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"EID20\",\n  \"type\": \"percent\",\n  \"value\": 20,\n  \"maxDiscount\": 500,\n  \"minSubtotal\": 1000,\n  \"expiresAt\": \"2028-12-31T23:59:59.000Z\",\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "coupons"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Coupon (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/coupons/COUPON_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "coupons",
+                "COUPON_ID_HERE"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Coupon (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/coupons/COUPON_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "coupons",
+                "COUPON_ID_HERE"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"productId\": \"PRODUCT_ID_HERE\",\n      \"ml\": 6,\n      \"qty\": 2\n    }\n  ],\n  \"shipping\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"01712345678\",\n    \"address\": \"Road 10, House 5\",\n    \"area\": \"Dhanmondi\",\n    \"city\": \"Dhaka\",\n    \"district\": \"Dhaka\",\n    \"postcode\": \"1209\"\n  },\n  \"paymentMethod\": \"cod\",\n  \"couponCode\": \"EID20\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Orders (Customer)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "mine"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Order By ID or Number (Requires Phone query if guest)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/SG-XXXXXX?phone=01712345678",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "SG-XXXXXX"
+              ],
+              "query": [
+                {
+                  "key": "phone",
+                  "value": "01712345678"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Orders (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Order Status (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/ORDER_ID_HERE/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "ORDER_ID_HERE",
+                "status"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Get Product Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews?productId=PRODUCT_ID_HERE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "PRODUCT_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Featured Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/featured",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "featured"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"PRODUCT_ID_HERE\",\n  \"rating\": 5,\n  \"comment\": \"Amazing fragrance oil, lasts all day!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Addresses",
+      "item": [
+        {
+          "name": "Update Profile Info",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"avatarUrl\": \"https://res.cloudinary.com/demo/image/upload/sample.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "profile"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Addresses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/addresses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "addresses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Office\",\n  \"name\": \"John Doe\",\n  \"phone\": \"01712345678\",\n  \"address\": \"Floor 4, Building 12\",\n  \"area\": \"Gulshan 2\",\n  \"city\": \"Dhaka\",\n  \"district\": \"Dhaka\",\n  \"postcode\": \"1212\",\n  \"isDefault\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/addresses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "addresses"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"Floor 5, Building 12\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/addresses/0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "addresses",
+                "0"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Default Address",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/addresses/0/default",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "addresses",
+                "0",
+                "default"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/addresses/0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "addresses",
+                "0"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
