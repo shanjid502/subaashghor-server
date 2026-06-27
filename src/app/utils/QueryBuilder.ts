@@ -1,4 +1,4 @@
-import { Query } from 'mongoose';
+import { QueryFilter, Query } from 'mongoose';
 
 class QueryBuilder<T> {
   public modelQuery: Query<T[], T>;
@@ -16,7 +16,7 @@ class QueryBuilder<T> {
         $or: searchableFields.map((field) => ({
           [field]: { $regex: searchTerm, $options: 'i' },
         })),
-      });
+      } as QueryFilter<T>);
     }
     return this;
   }
@@ -25,7 +25,7 @@ class QueryBuilder<T> {
     const queryObj = { ...this.query };
     const excludedFields = ['searchTerm', 'sort', 'limit', 'page', 'fields'];
     excludedFields.forEach((el) => delete queryObj[el]);
-    this.modelQuery = this.modelQuery.find(queryObj);
+    this.modelQuery = this.modelQuery.find(queryObj as QueryFilter<T>);
     return this;
   }
 
@@ -51,7 +51,6 @@ class QueryBuilder<T> {
     return this;
   }
 
-  // Returns total count for pagination metadata
   async countTotal() {
     const filter = this.modelQuery.getFilter();
     const total = await this.modelQuery.model.countDocuments(filter);

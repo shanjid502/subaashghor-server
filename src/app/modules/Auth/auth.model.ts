@@ -1,43 +1,58 @@
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
-import config from '../../config';
-import { IUser } from './auth.interface';
+import { TUserRole } from './auth.interface';
 
-const userSchema = new Schema(
+export interface IUser {
+  _id?: string;
+  email: string;
+  password: string;
+  role: TUserRole;
+  createdAt?: Date;
+  updatedAt?: Date;
+  comparePassword(plainPassword: string): Promise<boolean>;
+}
+
+const userSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true, trim: true },
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
       trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
     },
-    phone: { type: String, trim: true },
-    password: { type: String, required: true, select: false },
-    role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
-    avatar: { type: String },
-    passwordResetToken: { type: String, select: false },
-    passwordResetExpires: { type: Date, select: false },
+    password: {
+      type: String,
+      required: true,
+      select: false,
+      minlength: 6,
+    },
+    role: {
+      type: String,
+      enum: ['ADMIN', 'USER'],
+      default: 'USER',
+    },
   },
   { timestamps: true },
 );
 
-// Hash password before save
-// Using any for 'this' and explicit signature for 'next' to resolve Mongoose v9 TS2349 errors
-userSchema.pre('save', function (this: any, next: any) {
-  const doc = this;
-  if (!doc.isModified('password')) {
-    return next();
+// Async pre-save hook — throwing rejects the save promise, no 'next' needed
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) {
+    return;
   }
-  bcrypt.genSalt(config.bcrypt_salt_rounds, (err, salt) => {
-    if (err) return next(err);
-    bcrypt.hash(doc.password, salt, (err, hash) => {
-      if (err) return next(err);
-      doc.password = hash;
-      next();
-    });
-  });
+  try {
+    this.password = await bcrypt.hash(this.password, 10);
+  } catch (error) {
+    throw error;
+  }
 });
+
+userSchema.methods.comparePassword = async function (
+  plainPassword: string,
+): Promise<boolean> {
+  return bcrypt.compare(plainPassword, this.password);
+};
 
 export const UserModel = model<IUser>('User', userSchema);

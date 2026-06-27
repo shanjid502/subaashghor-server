@@ -1,39 +1,12 @@
 import { Router } from 'express';
 import { AuthRoutes } from '../modules/Auth/auth.route';
-import { ProductRoutes } from '../modules/Product/product.route';
-import { CollectionRoutes } from '../modules/Collection/collection.route';
-import { PostRoutes } from '../modules/Post/post.route';
-import { CouponRoutes } from '../modules/Coupon/coupon.route';
-import { ReviewRoutes } from '../modules/Review/review.route';
-import { OrderRoutes } from '../modules/Order/order.route';
-import { ProfileRoutes } from '../modules/Profile/profile.route';
-import { AddressRoutes } from '../modules/Address/address.route';
-import { WishlistRoutes } from '../modules/Wishlist/wishlist.route';
-import { NewsletterRoutes } from '../modules/Newsletter/newsletter.route';
-import { LeadRoutes } from '../modules/Newsletter/newsletter.lead.route';
-import { NotifyMeRoutes } from '../modules/NotifyMe/notifyme.route';
-
-import { WebhookRoutes } from '../modules/Webhook/webhook.route';
-import { SiteConfigRoutes } from '../modules/SiteConfig/siteconfig.route';
+// --- INJECT IMPORTS HERE ---
 
 const router = Router();
 
 const moduleRoutes = [
-  { path: '/auth', route: AuthRoutes },
-  { path: '/products', route: ProductRoutes },
-  { path: '/collections', route: CollectionRoutes },
-  { path: '/posts', route: PostRoutes },
-  { path: '/coupons', route: CouponRoutes },
-  { path: '/reviews', route: ReviewRoutes },
-  { path: '/orders', route: OrderRoutes },
-  { path: '/profile', route: ProfileRoutes },
-  { path: '/addresses', route: AddressRoutes },
-  { path: '/wishlist', route: WishlistRoutes },
-  { path: '/newsletter', route: NewsletterRoutes },
-  { path: '/leads', route: LeadRoutes },
-  { path: '/notify-me', route: NotifyMeRoutes },
-  { path: '/site-config', route: SiteConfigRoutes },
-  { path: '/public/webhooks', route: WebhookRoutes },
+    { path: '/auth', route: AuthRoutes },
+  // --- INJECT ROUTES HERE ---
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

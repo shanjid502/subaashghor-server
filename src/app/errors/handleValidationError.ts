@@ -1,9 +1,7 @@
 import { Error } from 'mongoose';
 import { TErrorSources, TGenericErrorResponse } from '../interfaces/error';
 
-const handleValidationError = (
-  err: Error.ValidationError,
-): TGenericErrorResponse => {
+const handleValidationError = (err: Error.ValidationError): TGenericErrorResponse => {
   const errorSources: TErrorSources = Object.values(err.errors).map(
     (val: Error.ValidatorError | Error.CastError) => ({
       path: val?.path,

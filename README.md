@@ -1,122 +1,163 @@
-# Subaashghor Backend Server
+# server-subaashghor
 
-This is the backend server for the Subaashghor e-commerce platform, built with Node.js, Express, and MongoDB.
+> Scaffolded with [create-express-modular](https://create-express-modular.lovable.app/) (cem)
 
-## 🚀 Getting Started
+A production-ready, domain-driven **Express + TypeScript** backend.
 
-### Prerequisites
+## Tech Stack
 
-- Node.js (v18+)
-- MongoDB (Local or Atlas)
+| Layer | Choice |
+|---|---|
+| Runtime | Node.js ≥ 18 |
+| Framework | Express |
+| Language | TypeScript |
+| Database / ORM | Mongoose (MongoDB) |
+| Validation | Zod |
+| Auth | JWT (bcrypt + rate limiting) — HTTP-only cookies |
+| Containerization | Docker + docker-compose |
 
-### Installation
+## Getting Started
 
-1. Clone the repository
-2. Navigate to the server directory:
-   ```bash
-   cd server
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Create a `.env` file based on the `.env.example` (or use the provided `.env`):
-   ```env
-   PORT=5000
-   DATABASE_URL=mongodb://localhost:27017/subaashghor
-   JWT_ACCESS_SECRET=your_secret
-   ...
-   ```
-
-### Running the Server
-
-- **Development Mode**:
-  ```bash
-  npm run start:dev
-  ```
-- **Production Build**:
-  ```bash
-  npm run build
-  npm start
-  ```
-
----
-
-## 📚 API Documentation
-
-The server uses **Swagger** for interactive API documentation. Once the server is running, you can access it at:
-
-👉 [http://localhost:5000/api-docs](http://localhost:5000/api-docs)
-
----
-
-## 🛠 Core API Endpoints
-
-Below are some of the most common endpoints. All base URLs start with `/api/v1`.
-
-### Authentication (`/auth`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/signup` | Register a new user |
-| POST | `/auth/login` | Login and receive a JWT |
-| POST | `/auth/logout` | Clear session/cookies |
-| GET | `/auth/me` | Get current logged-in user details |
-
-### Products (`/products`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/products` | List all products (supports search/filters) |
-| GET | `/products/featured` | Get featured products |
-| GET | `/products/:slug` | Get single product details |
-| POST | `/products` | Create product (Admin only) |
-
-### Orders (`/orders`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/orders` | Place a new order |
-| GET | `/orders/mine` | View user's order history |
-| GET | `/orders/:id` | View specific order details |
-
----
-
-## 🧪 Testing the APIs
-
-### 1. Swagger UI (Recommended)
-Open [http://localhost:5000/api-docs](http://localhost:5000/api-docs) in your browser. You can click "Try it out" on any endpoint to send requests directly from the browser.
-
-### 2. Postman / Thunder Client
-- **Base URL**: `http://localhost:5000/api/v1`
-- **Authentication**: For protected routes, include the JWT token in the header:
-  `Authorization: Bearer <your_token>`
-
-### 3. Manual Testing via cURL
-Example login:
 ```bash
-curl -X POST http://localhost:5000/api/v1/auth/login \
-     -H "Content-Type: application/json" \
-     -d '{"email": "user@example.com", "password": "password123"}'
+# Install dependencies (already done by CEM)
+npm install
+
+# Start the dev server with hot reload
+cem dev
+```
+
+Your server will be running at `http://localhost:5000`.
+
+Visit the root URL in a browser to see the **CEM Welcome Page** — a styled landing page showing project info, server status, and available routes.
+
+## Available Scripts
+
+| Command | Description |
+|---|---|
+| `cem dev` | Start dev server with live reload |
+| `cem build` | Convention guards + compile TypeScript to `dist/` |
+| `cem start` | Start the production server with preflight checks |
+| `cem check` | Type-check, lint, and format check in one command |
+| `cem list` | List all modules, middlewares, and env vars |
+| `npm run lint` | Run ESLint |
+| `npm run lint:fix` | Run ESLint with auto-fix |
+| `npm run prettier:fix` | Format code with Prettier |
+
+## Package Manager (npm)
+
+This project was scaffolded with **npm**. Use it for all package operations:
+
+```bash
+# Install a production dependency
+npm install <package>
+
+# Install a dev dependency
+npm install -D <package>
+
+# Remove a package
+npm uninstall <package>
+
+# Re-install all dependencies
+npm install
+```
+
+> `cem dev`, `cem build`, `cem check`, and `cem start` are **package-manager-agnostic** —
+> they invoke tools directly from `node_modules/.bin/` and work the same regardless of which PM you use.
+
+## Adding Features
+
+### Add a module
+
+```bash
+cem add module Product
+```
+
+Creates a complete `Product` module in `src/app/modules/Product/` (controller, service, route, model, interface, validation) and auto-registers it in your router.
+
+### Add a middleware
+
+```bash
+cem add middleware rateLimiter
+```
+
+### Add an environment variable
+
+```bash
+cem add env STRIPE_SECRET_KEY
+```
+
+Adds the variable to `.env`, `.env.example`, and `src/app/config/index.ts` simultaneously.
+
+## Removing Features
+
+```bash
+cem remove module Product      # deletes folder + unwires route
+cem remove middleware logger    # deletes the middleware file
+cem remove env STRIPE_SECRET_KEY
+```
+
+## Project Structure
+
+```
+server-subaashghor/
+├── src/
+│   ├── app/
+│   │   ├── config/
+│   │   │   └── index.ts             # Central config (all env vars)
+│   │   ├── errors/                   # Error handler helpers
+│   │   ├── interfaces/               # Shared TypeScript types
+│   │   ├── middlewares/
+│   │   │   ├── globalErrorHandler.middleware.ts
+│   │   │   └── notFound.middleware.ts
+│   │   │   ├── auth.middleware.ts
+│   │   │   └── rateLimiter.middleware.ts
+│   │   ├── modules/
+│   │   │   └── Auth/             # JWT Auth module
+│   │   ├── routes/
+│   │   │   └── index.ts             # Unified routing registry
+│   │   └── utils/
+│   │       ├── catchAsync.ts
+│   │       ├── sendResponse.ts
+│   │       ├── validateRequest.ts
+│   │       ├── welcomePage.ts
+│   │       └── logger.ts
+│   ├── app.ts
+│   └── server.ts
+├── Dockerfile
+├── .dockerignore
+├── docker-compose.yml
+├── .env
+├── .env.example
+├── eslint.config.mjs
+├── tsconfig.json
+└── package.json
+```
+
+## Docker
+
+```bash
+# Start everything (app + database)
+docker-compose up --build
+
+# Production (single service, external DB)
+docker build -t server-subaashghor .
+docker run -p 5000:5000 --env-file .env server-subaashghor
+```
+
+## Error Handling
+
+The `globalErrorHandler` middleware is **stack-aware** — it maps database and validation errors into a consistent JSON response:
+
+```json
+{
+  "success": false,
+  "message": "Validation Error",
+  "errorSources": [
+    { "path": "email", "message": "Invalid email address" }
+  ]
+}
 ```
 
 ---
 
-## 🏗 Project Structure
-
-```text
-src/
-├── app/
-│   ├── modules/       # Feature-based modules (Auth, Product, Order, etc.)
-│   ├── middlewares/   # Global and route-specific middlewares
-│   ├── routes/        # Main router aggregation
-│   ├── config/        # Environment configuration
-│   └── utils/         # Helper functions and swagger setup
-├── server.ts          # Entry point (Server listener)
-└── app.ts             # Express app configuration
-```
-
----
-
-## 🛡️ Build Guard
-
-This project uses a custom build guard to enforce architectural standards (e.g., file naming conventions). If your build fails, check the console output for "ARCHITECTURE VIOLATION" messages.
-
-- **Rule**: All files in a module folder must start with the lowercase module name (e.g., `src/app/modules/User/user.service.ts`).
+Built with [`create-express-modular`](https://create-express-modular.lovable.app/) — stop scaffolding, start shipping.

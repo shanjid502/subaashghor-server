@@ -31,13 +31,15 @@ const globalErrorHandler = (
 
   // ── Discriminated dispatch ────────────────────────────────────────────────
   // Order matters: most specific first, generic Error last
-
+  
   if (err instanceof ZodError) {
     const simplified = handleZodError(err);
     statusCode = simplified.statusCode;
     message = simplified.message;
     errorSources = simplified.errorSources;
-  } else if (err instanceof MongooseError.CastError) {
+  } else
+  
+  if (err instanceof MongooseError.CastError) {
     const simplified = handleCastError(err);
     statusCode = simplified.statusCode;
     message = simplified.message;
@@ -52,7 +54,8 @@ const globalErrorHandler = (
     statusCode = simplified.statusCode;
     message = simplified.message;
     errorSources = simplified.errorSources;
-  } else if (err instanceof AppError) {
+  } else
+  if (err instanceof AppError) {
     statusCode = err.statusCode;
     message = err.message;
     errorSources = [{ path: '', message: err.message }];

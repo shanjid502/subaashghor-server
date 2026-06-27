@@ -1,19 +1,34 @@
-# Build stage
-FROM node:20-alpine AS build
+# ── Build stage ───────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
 WORKDIR /app
+
+# Install dependencies first (layer cache)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
+
+# Copy source and compile
 COPY . .
 RUN npm run build
 
-# Production stage
-FROM node:20-alpine
+# ── Production stage ───────────────────────────────────────────
+FROM node:20-alpine AS production
+
 WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Install only production deps
 COPY package*.json ./
-RUN npm install --omit=dev
-COPY --from=build /app/dist ./dist
-# If you have other assets like email templates, copy them here
-# COPY --from=build /app/src/assets ./dist/assets
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy compiled output
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 5000
-CMD ["npm", "run", "start:prod"]
+
+# Run as a non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+CMD ["node", "dist/server.js"]

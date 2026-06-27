@@ -1,36 +1,41 @@
-import express, { Application } from 'express';
+import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import logger from './app/utils/logger';
+import { cemWelcomePage } from './app/utils/welcomePage';
 import cookieParser from 'cookie-parser';
+import { globalRateLimiter } from './app/middlewares/rateLimiter.middleware';
 import router from './app/routes';
-import notFound from './app/middlewares/notFound';
-import globalErrorHandler from './app/middlewares/globalErrorHandler';
-import config from './app/config';
-
-import { setupSwagger } from './app/utils/swagger';
+import notFound from './app/middlewares/notFound.middleware';
+import globalErrorHandler from './app/middlewares/globalErrorHandler.middleware';
 
 const app: Application = express();
 
-// ── Swagger Documentation ──────────────────────────────────────────────────
-setupSwagger(app);
-
 // ── Global Middlewares ────────────────────────────────────────────────────────
 app.use(helmet());
-app.use(
-  cors({
-    origin: [
-      config.client_url,
-      'http://localhost:5173',
-      'https://subaashghor.com',
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }),
-);
-app.use(cookieParser());
-app.use(express.json({ limit: '10mb' }));
+app.use(cors());
+app.use(globalRateLimiter);
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// ── Root ──────────────────────────────────────────────────────────────────────
+app.get('/', (_req: Request, res: Response): void => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(cemWelcomePage());
+});
+
+// ── Health Check ──────────────────────────────────────────────────────────────
+app.get('/health', (_req: Request, res: Response): void => {
+  const uptime = process.uptime();
+  const timestamp = new Date().toISOString();
+  logger.info(`Health check called — uptime: ${uptime.toFixed(2)}s`);
+  res.status(200).json({
+    status: 'ok',
+    uptime: parseFloat(uptime.toFixed(2)),
+    timestamp,
+  });
+});
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/v1', router);
