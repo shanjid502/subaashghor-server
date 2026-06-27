@@ -1,34 +1,118 @@
-import { IUser } from './user.interface';
+import { StatusCodes } from 'http-status-codes';
+import AppError from '../../errors/AppError';
+import { UserModel, IAddress } from '../Auth/auth.model';
 
-const createUser = async (payload: IUser) => {
-  // TODO: Implement create logic
-  return payload;
+const updateProfile = async (userId: string, payload: { name?: string; avatarUrl?: string }) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+
+  if (payload.name) user.name = payload.name;
+  if (payload.avatarUrl) user.avatarUrl = payload.avatarUrl;
+
+  await user.save();
+  return user;
 };
 
-const getAllUsers = async (query: Record<string, unknown>) => {
-  // TODO: Implement list logic (with filtering, sorting, pagination)
-  return [];
+const getAddresses = async (userId: string) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+  return user.addresses || [];
 };
 
-const getSingleUser = async (id: string) => {
-  // TODO: Implement find-by-id logic
-  return null;
+const addAddress = async (userId: string, address: IAddress) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+
+  if (address.isDefault) {
+    // Unset other defaults
+    user.addresses.forEach((addr) => {
+      addr.isDefault = false;
+    });
+  } else if (user.addresses.length === 0) {
+    address.isDefault = true;
+  }
+
+  user.addresses.push(address);
+  await user.save();
+  return user.addresses[user.addresses.length - 1];
 };
 
-const updateUser = async (id: string, payload: Partial<IUser>) => {
-  // TODO: Implement update logic
-  return null;
+const updateAddress = async (userId: string, index: number, address: IAddress) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+
+  if (index < 0 || index >= user.addresses.length) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid address index');
+  }
+
+  if (address.isDefault) {
+    // Unset other defaults
+    user.addresses.forEach((addr, i) => {
+      if (i !== index) addr.isDefault = false;
+    });
+  }
+
+  user.addresses[index] = {
+    ...user.addresses[index],
+    ...address,
+  };
+
+  await user.save();
+  return user.addresses[index];
 };
 
-const deleteUser = async (id: string) => {
-  // TODO: Implement delete logic
-  return null;
+const deleteAddress = async (userId: string, index: number) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+
+  if (index < 0 || index >= user.addresses.length) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid address index');
+  }
+
+  const wasDefault = user.addresses[index].isDefault;
+  user.addresses.splice(index, 1);
+
+  if (wasDefault && user.addresses.length > 0) {
+    user.addresses[0].isDefault = true;
+  }
+
+  await user.save();
+  return { ok: true };
+};
+
+const setDefaultAddress = async (userId: string, index: number) => {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+
+  if (index < 0 || index >= user.addresses.length) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid address index');
+  }
+
+  user.addresses.forEach((addr, i) => {
+    addr.isDefault = i === index;
+  });
+
+  await user.save();
+  return user.addresses;
 };
 
 export const UserService = {
-  createUser,
-  getAllUsers,
-  getSingleUser,
-  updateUser,
-  deleteUser,
+  updateProfile,
+  getAddresses,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
 };

@@ -1,19 +1,12 @@
 import { z } from 'zod';
 
-const createCouponSchema = z.object({
+const validateCouponSchema = z.object({
   body: z.object({
-    // TODO: Define fields
-    // name: z.string().min(1, 'Name is required'),
-  }),
-});
-
-const updateCouponSchema = z.object({
-  body: z.object({
-    // TODO: Define update fields (all optional)
+    code: z.string().min(1, 'Coupon code is required'),
+    subtotal: z.number().min(0, 'Subtotal must be positive'),
   }),
 });
 
 export const CouponValidation = {
-  createCouponSchema,
-  updateCouponSchema,
+  validateCouponSchema,
 };

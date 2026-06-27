@@ -1,34 +1,19 @@
-import { INewslatter } from './newslatter.interface';
+import { NewslatterModel } from './newslatter.model';
 
-const createNewslatter = async (payload: INewslatter) => {
-  // TODO: Implement create logic
-  return payload;
-};
+const subscribe = async (email: string) => {
+  const cleanEmail = email.trim().toLowerCase();
 
-const getAllNewslatters = async (query: Record<string, unknown>) => {
-  // TODO: Implement list logic (with filtering, sorting, pagination)
-  return [];
-};
+  // Idempotent: return existing subscription if duplicate
+  let subscriber = await NewslatterModel.findOne({ email: cleanEmail });
+  if (!subscriber) {
+    subscriber = await NewslatterModel.create({ email: cleanEmail });
+  }
 
-const getSingleNewslatter = async (id: string) => {
-  // TODO: Implement find-by-id logic
-  return null;
-};
-
-const updateNewslatter = async (id: string, payload: Partial<INewslatter>) => {
-  // TODO: Implement update logic
-  return null;
-};
-
-const deleteNewslatter = async (id: string) => {
-  // TODO: Implement delete logic
-  return null;
+  return {
+    email: subscriber.email,
+  };
 };
 
 export const NewslatterService = {
-  createNewslatter,
-  getAllNewslatters,
-  getSingleNewslatter,
-  updateNewslatter,
-  deleteNewslatter,
+  subscribe,
 };

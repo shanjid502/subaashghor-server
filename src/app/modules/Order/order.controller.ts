@@ -5,7 +5,10 @@ import sendResponse from '../../utils/sendResponse';
 import { OrderService } from './order.service';
 
 const createOrder = catchAsync(async (req: Request, res: Response) => {
-  const result = await OrderService.createOrder(req.body);
+  // If user is authenticated, use their id. Otherwise, guest checkout.
+  const userId = req.user?.userId;
+  const result = await OrderService.createOrder(userId, req.body);
+
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
     success: true,
@@ -14,50 +17,30 @@ const createOrder = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllOrders = catchAsync(async (req: Request, res: Response) => {
-  const result = await OrderService.getAllOrders(req.query);
+const getMyOrders = catchAsync(async (req: Request, res: Response) => {
+  const result = await OrderService.getMyOrders(req.user!.userId);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'Orders retrieved successfully',
+    message: 'Orders fetched successfully',
     data: result,
   });
 });
 
-const getSingleOrder = catchAsync(async (req: Request, res: Response) => {
-  const result = await OrderService.getSingleOrder(req.params.id);
+const getOrderByIdOrNumber = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const result = await OrderService.getOrderByIdOrNumber(userId, req.params.idOrNumber);
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'Order retrieved successfully',
+    message: 'Order details fetched successfully',
     data: result,
   });
 });
 
-const updateOrder = catchAsync(async (req: Request, res: Response) => {
-  const result = await OrderService.updateOrder(req.params.id, req.body);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Order updated successfully',
-    data: result,
-  });
-});
-
-const deleteOrder = catchAsync(async (req: Request, res: Response) => {
-  await OrderService.deleteOrder(req.params.id);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Order deleted successfully',
-    data: null,
-  });
-});
-
-export const OrderControllers = {
+export const OrderController = {
   createOrder,
-  getAllOrders,
-  getSingleOrder,
-  updateOrder,
-  deleteOrder,
+  getMyOrders,
+  getOrderByIdOrNumber,
 };

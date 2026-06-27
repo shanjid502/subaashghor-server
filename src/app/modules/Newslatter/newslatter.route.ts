@@ -1,12 +1,14 @@
 import express from 'express';
-import { NewslatterControllers } from './newslatter.controller';
+import { NewslatterController } from './newslatter.controller';
+import validateRequest from '../../utils/validateRequest';
+import { NewslatterValidation } from './newslatter.validation';
 
 const router = express.Router();
 
-router.post('/', NewslatterControllers.createNewslatter);
-router.get('/', NewslatterControllers.getAllNewslatters);
-router.get('/:id', NewslatterControllers.getSingleNewslatter);
-router.patch('/:id', NewslatterControllers.updateNewslatter);
-router.delete('/:id', NewslatterControllers.deleteNewslatter);
+router.post(
+  '/subscribe',
+  validateRequest(NewslatterValidation.subscribeSchema),
+  NewslatterController.subscribe,
+);
 
 export const NewslatterRoutes = router;

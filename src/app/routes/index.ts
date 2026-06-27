@@ -13,16 +13,15 @@ import { NewslatterRoutes } from '../modules/Newslatter/newslatter.route';
 const router = Router();
 
 const moduleRoutes = [
-    { path: '/auth', route: AuthRoutes },
-    { path: '/users', route: UserRoutes },
-    { path: '/products', route: ProductRoutes },
-    { path: '/collectia', route: CollectionRoutes },
-    { path: '/posts', route: PostRoutes },
-    { path: '/reviews', route: ReviewRoutes },
-    { path: '/coupa', route: CouponRoutes },
-    { path: '/orders', route: OrderRoutes },
-    { path: '/newslatters', route: NewslatterRoutes },
-  // --- INJECT ROUTES HERE ---
+  { path: '/auth', route: AuthRoutes },
+  { path: '/', route: UserRoutes }, // profile & addresses are top-level
+  { path: '/products', route: ProductRoutes },
+  { path: '/collections', route: CollectionRoutes },
+  { path: '/posts', route: PostRoutes },
+  { path: '/reviews', route: ReviewRoutes },
+  { path: '/coupons', route: CouponRoutes },
+  { path: '/orders', route: OrderRoutes },
+  { path: '/newsletter', route: NewslatterRoutes },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

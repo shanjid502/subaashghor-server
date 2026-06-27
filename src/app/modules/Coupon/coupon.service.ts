@@ -1,34 +1,31 @@
-import { ICoupon } from './coupon.interface';
+import { StatusCodes } from 'http-status-codes';
+import AppError from '../../errors/AppError';
+import { CouponModel } from './coupon.model';
 
-const createCoupon = async (payload: ICoupon) => {
-  // TODO: Implement create logic
-  return payload;
-};
+const validateCoupon = async (code: string, subtotal: number) => {
+  const coupon = await CouponModel.findOne({
+    code: code.trim().toUpperCase(),
+    active: true,
+  });
 
-const getAllCoupons = async (query: Record<string, unknown>) => {
-  // TODO: Implement list logic (with filtering, sorting, pagination)
-  return [];
-};
+  if (!coupon) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Invalid coupon');
+  }
 
-const getSingleCoupon = async (id: string) => {
-  // TODO: Implement find-by-id logic
-  return null;
-};
+  if (coupon.expiresAt && new Date() > coupon.expiresAt) {
+    throw new AppError(StatusCodes.UNPROCESSABLE_ENTITY, 'This coupon has expired');
+  }
 
-const updateCoupon = async (id: string, payload: Partial<ICoupon>) => {
-  // TODO: Implement update logic
-  return null;
-};
+  if (coupon.minSubtotal && subtotal < coupon.minSubtotal) {
+    throw new AppError(
+      StatusCodes.UNPROCESSABLE_ENTITY,
+      'Subtotal too low for this coupon',
+    );
+  }
 
-const deleteCoupon = async (id: string) => {
-  // TODO: Implement delete logic
-  return null;
+  return coupon;
 };
 
 export const CouponService = {
-  createCoupon,
-  getAllCoupons,
-  getSingleCoupon,
-  updateCoupon,
-  deleteCoupon,
+  validateCoupon,
 };

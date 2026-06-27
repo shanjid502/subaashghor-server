@@ -1,19 +1,27 @@
 import { z } from 'zod';
 
-const createUserSchema = z.object({
+const updateProfileSchema = z.object({
   body: z.object({
-    // TODO: Define fields
-    // name: z.string().min(1, 'Name is required'),
+    name: z.string().min(2).optional(),
+    avatarUrl: z.string().url().optional(),
   }),
 });
 
-const updateUserSchema = z.object({
+const addressSchema = z.object({
   body: z.object({
-    // TODO: Define update fields (all optional)
+    label: z.string().optional(),
+    name: z.string().min(2, 'Name is required'),
+    phone: z.string().min(10, 'Phone is required'),
+    address: z.string().min(5, 'Address is required'),
+    area: z.string().min(2, 'Area is required'),
+    city: z.string().min(2, 'City is required'),
+    district: z.string().min(2, 'District is required'),
+    postcode: z.string().optional(),
+    isDefault: z.boolean().optional(),
   }),
 });
 
 export const UserValidation = {
-  createUserSchema,
-  updateUserSchema,
+  updateProfileSchema,
+  addressSchema,
 };

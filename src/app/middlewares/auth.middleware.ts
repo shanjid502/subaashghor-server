@@ -8,7 +8,7 @@ import config from '../config';
 declare global {
   namespace Express {
     interface Request {
-      user: JwtPayload & { userId: string; role: string };
+      user?: JwtPayload & { userId: string; role: string };
     }
   }
 }
@@ -16,7 +16,7 @@ declare global {
 const auth = (...requiredRoles: string[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      const token = req.cookies?.accessToken;
+      const token = req.cookies?.sg_session;
 
       if (!token) {
         return next(new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized!'));
@@ -24,7 +24,10 @@ const auth = (...requiredRoles: string[]) => {
 
       const decoded = verifyToken(token, config.jwt_access_secret as string);
 
-      if (requiredRoles.length && !requiredRoles.includes(decoded.role)) {
+      const userRole = (decoded.role || '').toLowerCase();
+      const roles = requiredRoles.map((r) => r.toLowerCase());
+
+      if (roles.length && !roles.includes(userRole)) {
         return next(
           new AppError(StatusCodes.FORBIDDEN, 'You do not have the required permissions!'),
         );
@@ -36,6 +39,19 @@ const auth = (...requiredRoles: string[]) => {
       next(new AppError(StatusCodes.UNAUTHORIZED, 'Invalid or expired token!'));
     }
   };
+};
+
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction): void => {
+  try {
+    const token = req.cookies?.sg_session;
+    if (token) {
+      const decoded = verifyToken(token, config.jwt_access_secret as string);
+      req.user = decoded as JwtPayload & { userId: string; role: string };
+    }
+  } catch {
+    // Ignore invalid/expired token for optional auth
+  }
+  next();
 };
 
 export default auth;

@@ -1,34 +1,47 @@
-import { ICollection } from './collection.interface';
+import { StatusCodes } from 'http-status-codes';
+import AppError from '../../errors/AppError';
+import { CollectionModel } from './collection.model';
+import { ProductModel } from '../Product/product.model';
 
-const createCollection = async (payload: ICollection) => {
-  // TODO: Implement create logic
-  return payload;
+const getAllCollections = async () => {
+  const collections = await CollectionModel.find({ isActive: true }).sort('order');
+
+  // Dynamically calculate productCount for each collection
+  const collectionsWithCount = await Promise.all(
+    collections.map(async (col) => {
+      const productCount = await ProductModel.countDocuments({
+        collections: col.slug,
+        isActive: true,
+      });
+
+      return {
+        ...col.toJSON(),
+        productCount,
+      };
+    }),
+  );
+
+  return collectionsWithCount;
 };
 
-const getAllCollections = async (query: Record<string, unknown>) => {
-  // TODO: Implement list logic (with filtering, sorting, pagination)
-  return [];
-};
+const getCollectionBySlug = async (slug: string) => {
+  const collection = await CollectionModel.findOne({ slug, isActive: true });
+  if (!collection) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Collection not found');
+  }
 
-const getSingleCollection = async (id: string) => {
-  // TODO: Implement find-by-id logic
-  return null;
-};
+  const productCount = await ProductModel.countDocuments({
+    collections: slug,
+    isActive: true,
+  });
 
-const updateCollection = async (id: string, payload: Partial<ICollection>) => {
-  // TODO: Implement update logic
-  return null;
-};
-
-const deleteCollection = async (id: string) => {
-  // TODO: Implement delete logic
-  return null;
+  return {
+    ...collection.toJSON(),
+    productCount,
+  };
 };
 
 export const CollectionService = {
-  createCollection,
   getAllCollections,
-  getSingleCollection,
-  updateCollection,
-  deleteCollection,
+  getCollectionBySlug,
 };

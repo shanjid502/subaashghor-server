@@ -3,12 +3,11 @@ export type TLoginUser = {
   password: string;
 };
 
-export type TUserRole = 'ADMIN' | 'USER';
+export type TUserRole = 'customer' | 'admin';
 
-export type TLoginResponse = {
-  user: {
-    userId: string;
-    email: string;
-    role: TUserRole;
-  };
+export type TSignupUser = {
+  name: string;
+  email: string;
+  password?: string;
+  phone?: string;
 };

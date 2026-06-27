@@ -9,11 +9,18 @@ import router from './app/routes';
 import notFound from './app/middlewares/notFound.middleware';
 import globalErrorHandler from './app/middlewares/globalErrorHandler.middleware';
 
+import config from './app/config';
+
 const app: Application = express();
 
 // ── Global Middlewares ────────────────────────────────────────────────────────
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: config.cors_origin ? config.cors_origin.split(',') : true,
+    credentials: true,
+  }),
+);
 app.use(globalRateLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

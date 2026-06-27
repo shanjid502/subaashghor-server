@@ -4,60 +4,74 @@ import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { UserService } from './user.service';
 
-const createUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.createUser(req.body);
+const updateProfile = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.updateProfile(req.user!.userId, req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Profile updated successfully',
+    data: result,
+  });
+});
+
+const getAddresses = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.getAddresses(req.user!.userId);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Addresses fetched successfully',
+    data: result,
+  });
+});
+
+const addAddress = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.addAddress(req.user!.userId, req.body);
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
     success: true,
-    message: 'User created successfully',
+    message: 'Address added successfully',
     data: result,
   });
 });
 
-const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.getAllUsers(req.query);
+const updateAddress = catchAsync(async (req: Request, res: Response) => {
+  const index = Number(req.params.index);
+  const result = await UserService.updateAddress(req.user!.userId, index, req.body);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'Users retrieved successfully',
+    message: 'Address updated successfully',
     data: result,
   });
 });
 
-const getSingleUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.getSingleUser(req.params.id);
+const deleteAddress = catchAsync(async (req: Request, res: Response) => {
+  const index = Number(req.params.index);
+  const result = await UserService.deleteAddress(req.user!.userId, index);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'User retrieved successfully',
+    message: 'Address deleted successfully',
     data: result,
   });
 });
 
-const updateUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.updateUser(req.params.id, req.body);
+const setDefaultAddress = catchAsync(async (req: Request, res: Response) => {
+  const index = Number(req.params.index);
+  const result = await UserService.setDefaultAddress(req.user!.userId, index);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'User updated successfully',
+    message: 'Default address updated successfully',
     data: result,
   });
 });
 
-const deleteUser = catchAsync(async (req: Request, res: Response) => {
-  await UserService.deleteUser(req.params.id);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'User deleted successfully',
-    data: null,
-  });
-});
-
-export const UserControllers = {
-  createUser,
-  getAllUsers,
-  getSingleUser,
-  updateUser,
-  deleteUser,
+export const UserController = {
+  updateProfile,
+  getAddresses,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
 };

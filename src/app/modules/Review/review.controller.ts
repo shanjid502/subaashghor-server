@@ -4,60 +4,38 @@ import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ReviewService } from './review.service';
 
+const getReviews = catchAsync(async (req: Request, res: Response) => {
+  const result = await ReviewService.getReviews(req.query);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Reviews fetched successfully',
+    data: result,
+  });
+});
+
 const createReview = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.createReview(req.body);
+  const result = await ReviewService.createReview(req.user!.userId, req.body);
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
     success: true,
-    message: 'Review created successfully',
+    message: 'Review submitted successfully',
     data: result,
   });
 });
 
-const getAllReviews = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.getAllReviews(req.query);
+const getFeaturedReviews = catchAsync(async (_req: Request, res: Response) => {
+  const result = await ReviewService.getFeaturedReviews();
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'Reviews retrieved successfully',
+    message: 'Featured testimonials fetched successfully',
     data: result,
   });
 });
 
-const getSingleReview = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.getSingleReview(req.params.id);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Review retrieved successfully',
-    data: result,
-  });
-});
-
-const updateReview = catchAsync(async (req: Request, res: Response) => {
-  const result = await ReviewService.updateReview(req.params.id, req.body);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Review updated successfully',
-    data: result,
-  });
-});
-
-const deleteReview = catchAsync(async (req: Request, res: Response) => {
-  await ReviewService.deleteReview(req.params.id);
-  sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Review deleted successfully',
-    data: null,
-  });
-});
-
-export const ReviewControllers = {
+export const ReviewController = {
+  getReviews,
   createReview,
-  getAllReviews,
-  getSingleReview,
-  updateReview,
-  deleteReview,
+  getFeaturedReviews,
 };
