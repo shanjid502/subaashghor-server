@@ -172,15 +172,14 @@ const resetPassword = async (payload: {
       throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid or expired OTP');
     }
 
-    token.attempts += 1;
-    await token.save();
-
-    if (token.attempts > 5) {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'Too many invalid attempts');
+    if (token.attempts >= 5) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Too many invalid attempts. Please request a new OTP.');
     }
 
     const isMatch = await bcrypt.compare(payload.code, token.codeHash);
     if (!isMatch) {
+      token.attempts += 1;
+      await token.save();
       throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect OTP code');
     }
 
@@ -241,15 +240,14 @@ const verifyOtp = async (phone: string, code: string, purpose: 'login' | 'signup
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid or expired OTP');
   }
 
-  token.attempts += 1;
-  await token.save();
-
-  if (token.attempts > 5) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Too many invalid attempts');
+  if (token.attempts >= 5) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Too many invalid attempts. Please request a new OTP.');
   }
 
   const isMatch = await bcrypt.compare(code, token.codeHash);
   if (!isMatch) {
+    token.attempts += 1;
+    await token.save();
     throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect OTP code');
   }
 
