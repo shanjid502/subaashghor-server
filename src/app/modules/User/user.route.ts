@@ -46,4 +46,10 @@ router.post(
   UserController.setDefaultAddress,
 );
 
+router.get(
+  '/users',
+  auth(USER_ROLE.admin),
+  UserController.getAllUsers,
+);
+
 export const UserRoutes = router;

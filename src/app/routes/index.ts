@@ -9,6 +9,7 @@ import { CouponRoutes } from '../modules/Coupon/coupon.route';
 import { OrderRoutes } from '../modules/Order/order.route';
 import { NewslatterRoutes } from '../modules/Newslatter/newslatter.route';
 import { UploadRoutes } from '../modules/Upload/upload.route';
+import { SettingsRoutes } from '../modules/Settings/settings.route';
 // --- INJECT IMPORTS HERE ---
 
 const router = Router();
@@ -24,6 +25,7 @@ const moduleRoutes = [
   { path: '/orders', route: OrderRoutes },
   { path: '/newsletter', route: NewslatterRoutes },
   { path: '/uploads', route: UploadRoutes },
+  { path: '/settings', route: SettingsRoutes },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

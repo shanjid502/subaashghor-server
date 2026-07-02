@@ -67,6 +67,16 @@ const setDefaultAddress = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllUsers = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.getAllUsers(req.query);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Users fetched successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateProfile,
   getAddresses,
@@ -74,4 +84,5 @@ export const UserController = {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
+  getAllUsers,
 };

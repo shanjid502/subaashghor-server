@@ -108,6 +108,64 @@ const setDefaultAddress = async (userId: string, index: number) => {
   return user.addresses;
 };
 
+const getAllUsers = async (query: Record<string, any>) => {
+  const role = query.role || 'customer';
+  const users = await UserModel.aggregate([
+    {
+      $match: { role },
+    },
+    {
+      $lookup: {
+        from: 'orders',
+        localField: '_id',
+        foreignField: 'userId',
+        as: 'userOrders',
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        phone: 1,
+        role: 1,
+        avatarUrl: 1,
+        createdAt: 1,
+        orders: { $size: '$userOrders' },
+        spent: {
+          $sum: {
+            $map: {
+              input: '$userOrders',
+              as: 'order',
+              in: {
+                $cond: [
+                  { $ne: ['$$order.status', 'cancelled'] },
+                  '$$order.total',
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+  ]);
+
+  return users.map((u) => ({
+    id: String(u._id),
+    _id: String(u._id),
+    name: u.name,
+    email: u.email || 'no-email@subaashghor.com',
+    phone: u.phone,
+    orders: u.orders,
+    spent: u.spent,
+    joined: u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : 'N/A',
+  }));
+};
+
 export const UserService = {
   updateProfile,
   getAddresses,
@@ -115,4 +173,5 @@ export const UserService = {
   updateAddress,
   deleteAddress,
   setDefaultAddress,
+  getAllUsers,
 };
