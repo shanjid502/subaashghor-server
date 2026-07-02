@@ -14,7 +14,11 @@ import config from './app/config';
 const app: Application = express();
 
 // ── Global Middlewares ────────────────────────────────────────────────────────
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 app.use(
   cors({
     origin: config.cors_origin ? config.cors_origin.split(',') : true,
