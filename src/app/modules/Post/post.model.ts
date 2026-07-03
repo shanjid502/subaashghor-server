@@ -17,6 +17,14 @@ export interface IPost {
   readMinutes?: number;
   featured?: boolean;
   published?: boolean;
+
+  // --- Module 08: AEO/SEO Readiness ---
+  metaTitle?: { bn: string; en: string };
+  metaDescription?: { bn: string; en: string };
+  faqs?: {
+    question: { bn: string; en: string };
+    answer: { bn: string; en: string };
+  }[];
 }
 
 const postSchema = new Schema<IPost>(
@@ -48,6 +56,28 @@ const postSchema = new Schema<IPost>(
     readMinutes: Number,
     featured: { type: Boolean, default: false, index: true },
     published: { type: Boolean, default: true, index: true },
+
+    // --- Module 08: AEO/SEO Readiness ---
+    metaTitle: {
+      bn: { type: String, default: '' },
+      en: { type: String, default: '' },
+    },
+    metaDescription: {
+      bn: { type: String, default: '' },
+      en: { type: String, default: '' },
+    },
+    faqs: [
+      {
+        question: {
+          bn: { type: String, default: '' },
+          en: { type: String, default: '' },
+        },
+        answer: {
+          bn: { type: String, default: '' },
+          en: { type: String, default: '' },
+        },
+      },
+    ],
   },
   {
     timestamps: true,

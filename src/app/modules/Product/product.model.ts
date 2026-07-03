@@ -65,6 +65,28 @@ const productSchema = new Schema<IProduct>(
     pairsWith: [String],
     isActive: { type: Boolean, default: true, index: true },
     lowStockThreshold: { type: Number, default: 5 },
+
+    // --- Module 08: AEO/SEO Readiness ---
+    metaTitle: {
+      bn: { type: String, default: '' },
+      en: { type: String, default: '' },
+    },
+    metaDescription: {
+      bn: { type: String, default: '' },
+      en: { type: String, default: '' },
+    },
+    faqs: [
+      {
+        question: {
+          bn: { type: String, default: '' },
+          en: { type: String, default: '' },
+        },
+        answer: {
+          bn: { type: String, default: '' },
+          en: { type: String, default: '' },
+        },
+      },
+    ],
   },
   {
     timestamps: true,

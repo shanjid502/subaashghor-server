@@ -36,4 +36,17 @@ export interface IProduct {
   pairsWith?: string[];
   isActive?: boolean;
   lowStockThreshold?: number;
+
+  // --- Module 08: AEO/SEO Readiness ---
+  metaTitle?: { bn: string; en: string };
+  metaDescription?: { bn: string; en: string };
+  faqs?: {
+    question: { bn: string; en: string };
+    answer: { bn: string; en: string };
+  }[];
+}
+
+export interface IFaq {
+  question: { bn: string; en: string };
+  answer: { bn: string; en: string };
 }
