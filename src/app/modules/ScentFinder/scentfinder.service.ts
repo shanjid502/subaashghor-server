@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
-import { QuestionModel, IQuestion } from './scentfinder.model';
+import { QuestionModel } from './scentfinder.model';
+import { IQuestion } from './scentfinder.interface';
 
 const defaultQuestions: IQuestion[] = [
   {

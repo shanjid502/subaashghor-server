@@ -1,22 +1,5 @@
 import { Schema, model } from 'mongoose';
-
-export interface IQuestionOption {
-  value: 'fresh' | 'warm' | 'floral' | 'woody';
-  label: {
-    bn: string;
-    en: string;
-  };
-}
-
-export interface IQuestion {
-  _id?: string;
-  id: string; // unique lowercase slug
-  prompt: {
-    bn: string;
-    en: string;
-  };
-  options: IQuestionOption[];
-}
+import { IQuestion, IQuestionOption } from './scentfinder.interface';
 
 const questionOptionSchema = new Schema<IQuestionOption>({
   value: {
