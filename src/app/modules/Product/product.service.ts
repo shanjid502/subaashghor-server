@@ -2,6 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { ProductModel } from './product.model';
 import { checkAndNotifyLowStock } from '../../utils/stockNotifier';
+import { pingSitemapToGoogle } from '../../utils/sitemapGenerator';
 
 const getAllProducts = async (query: Record<string, any>) => {
   const {
@@ -122,6 +123,7 @@ const createProduct = async (payload: any) => {
 
   const result = await ProductModel.create(payload);
   await checkAndNotifyLowStock(result);
+  setImmediate(() => pingSitemapToGoogle());
   return result;
 };
 
@@ -136,6 +138,7 @@ const updateProduct = async (id: string, payload: any) => {
   }
 
   await checkAndNotifyLowStock(result);
+  setImmediate(() => pingSitemapToGoogle());
   return result;
 };
 
@@ -144,6 +147,7 @@ const deleteProduct = async (id: string) => {
   if (!result) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
   }
+  setImmediate(() => pingSitemapToGoogle());
   return result;
 };
 
@@ -274,6 +278,12 @@ const generateFacebookProductFeed = async () => {
   return xml;
 };
 
+const clearCache = async () => {
+  cachedFeed = null;
+  cacheTime = 0;
+  return { success: true };
+};
+
 export const ProductService = {
   getAllProducts,
   getFeaturedProducts,
@@ -284,4 +294,5 @@ export const ProductService = {
   bulkUpdateProducts,
   exportInventoryCSV,
   generateFacebookProductFeed,
+  clearCache,
 };

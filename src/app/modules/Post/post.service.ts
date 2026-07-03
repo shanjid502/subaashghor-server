@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { PostModel } from './post.model';
+import { pingSitemapToGoogle } from '../../utils/sitemapGenerator';
 
 const getAllPosts = async (query: Record<string, any>) => {
   const { page = 1, limit = 100, featured, category, isAdmin = false } = query;
@@ -66,6 +67,7 @@ const createPost = async (payload: any) => {
   }
 
   const result = await PostModel.create(payload);
+  setImmediate(() => pingSitemapToGoogle());
   return result;
 };
 
@@ -79,6 +81,7 @@ const updatePost = async (id: string, payload: any) => {
     throw new AppError(StatusCodes.NOT_FOUND, 'Post not found');
   }
 
+  setImmediate(() => pingSitemapToGoogle());
   return result;
 };
 
@@ -87,6 +90,7 @@ const deletePost = async (id: string) => {
   if (!result) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Post not found');
   }
+  setImmediate(() => pingSitemapToGoogle());
   return result;
 };
 

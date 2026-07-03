@@ -27,5 +27,7 @@ router.get('/verify/domain', async (_req: Request, res: Response) => {
   res.type('text/html').send(token);
 });
 
+router.post('/clear-cache', auth(USER_ROLE.admin), SettingsController.clearCache);
+
 export const SettingsRoutes = router;
 

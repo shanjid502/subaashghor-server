@@ -1,6 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import logger from './app/utils/logger';
 import { cemWelcomePage } from './app/utils/welcomePage';
 import cookieParser from 'cookie-parser';
@@ -15,6 +16,10 @@ const app: Application = express();
 
 // ── Global Middlewares ────────────────────────────────────────────────────────
 app.set('trust proxy', 1);
+
+// 7.2 Gzip compression — compresses all text/html/json responses
+app.use(compression({ level: 6, threshold: 1024 }));
+
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },

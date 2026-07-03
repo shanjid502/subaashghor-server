@@ -43,4 +43,7 @@ export interface ISettings {
 
   // --- 5.6 Domain Verification ---
   domainVerificationToken?: string; // Served at GET /verify/domain
+
+  // --- 7.3 robots.txt Manager ---
+  robotsTxt?: string;
 }

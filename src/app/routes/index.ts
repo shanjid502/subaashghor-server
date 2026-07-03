@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { AuthRoutes } from '../modules/Auth/auth.route';
 import { UserRoutes } from '../modules/User/user.route';
 import { ProductRoutes } from '../modules/Product/product.route';
@@ -11,7 +11,10 @@ import { NewslatterRoutes } from '../modules/Newslatter/newslatter.route';
 import { UploadRoutes } from '../modules/Upload/upload.route';
 import { SettingsRoutes } from '../modules/Settings/settings.route';
 import { ScentFinderRoutes } from '../modules/ScentFinder/scentfinder.route';
+import { RedirectRoutes } from '../modules/Redirect/redirect.route';
 import { ProductController } from '../modules/Product/product.controller';
+import { generateSitemapXml } from '../utils/sitemapGenerator';
+import { SettingsModel } from '../modules/Settings/settings.model';
 // --- INJECT IMPORTS HERE ---
 const fbFeedRouter = Router();
 fbFeedRouter.get('/', ProductController.getFacebookProductFeed);
@@ -32,8 +35,35 @@ const moduleRoutes = [
   { path: '/settings', route: SettingsRoutes },
   { path: '/scent-finder/questions', route: ScentFinderRoutes },
   { path: '/fb-product-feed', route: fbFeedRouter },
+  { path: '/redirects', route: RedirectRoutes },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
+
+// 7.3 Dynamic sitemap.xml — generated live from MongoDB
+router.get('/sitemap.xml', async (_req: Request, res: Response) => {
+  try {
+    const xml = await generateSitemapXml();
+    res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache 1h
+    res.send(xml);
+  } catch {
+    res.status(500).send('Failed to generate sitemap');
+  }
+});
+
+// 7.3 Dynamic robots.txt — editable from the dashboard
+router.get('/robots.txt', async (_req: Request, res: Response) => {
+  try {
+    const settings = await SettingsModel.findOne().lean();
+    const robotsTxt = (settings as any)?.robotsTxt as string | undefined;
+    const defaultRobots = `User-agent: *\nAllow: /\nDisallow: /account\nDisallow: /checkout\nDisallow: /cart\nDisallow: /thank-you/\n\nSitemap: ${process.env.STOREFRONT_URL || 'https://subaashghor.com'}/sitemap.xml`;
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache 24h
+    res.send(robotsTxt || defaultRobots);
+  } catch {
+    res.status(500).send('Failed to load robots.txt');
+  }
+});
 
 export default router;

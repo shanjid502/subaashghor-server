@@ -47,6 +47,9 @@ const updateSettingsSchema = z.object({
 
     // --- Domain Verification ---
     domainVerificationToken: z.string().optional(),
+
+    // --- robots.txt ---
+    robotsTxt: z.string().optional(),
   }),
 });
 

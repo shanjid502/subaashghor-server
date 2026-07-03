@@ -48,6 +48,9 @@ const settingsSchema = new Schema<ISettings>(
 
     // --- 5.6 Domain Verification ---
     domainVerificationToken: { type: String, default: '' },
+
+    // --- 7.3 robots.txt Manager ---
+    robotsTxt: { type: String, default: '' },
   },
   {
     timestamps: true,
