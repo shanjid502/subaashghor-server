@@ -3,6 +3,9 @@ import AppError from '../../errors/AppError';
 import { OrderModel } from './order.model';
 import { ProductModel } from '../Product/product.model';
 import { CouponModel } from '../Coupon/coupon.model';
+import { dispatchWebhook } from '../../utils/webhookDispatcher';
+import { sendMetaPurchaseEvent } from '../../utils/metaCapi';
+import { generateEventId } from '../../utils/eventId';
 
 const createOrder = async (userId: string | undefined, payload: any) => {
   const { items, shipping, paymentMethod, couponCode } = payload;
@@ -147,6 +150,37 @@ const createOrder = async (userId: string | undefined, payload: any) => {
   }
 
   const order = await OrderModel.create(orderData);
+
+  // --- Fire async side-effects (never block order response) ---
+  setImmediate(async () => {
+    const orderId = String(order._id);
+    const eventId = generateEventId();
+
+    // 5.5 Webhook: notify Zapier / Make.com
+    await dispatchWebhook('order.created', {
+      eventId,
+      orderId,
+      orderNumber: order.orderNumber,
+      total: order.total,
+      paymentMethod: order.paymentMethod,
+      status: order.status,
+      shipping: order.shipping,
+      items: order.items,
+    });
+
+    // 5.3 Meta CAPI: server-side Purchase event
+    await sendMetaPurchaseEvent({
+      orderId,
+      total: order.total,
+      currency: 'BDT',
+      email: (payload as any).email,
+      phone: order.shipping?.phone,
+      ipAddress: (payload as any)._ipAddress,
+      userAgent: (payload as any)._userAgent,
+      fbclid: (payload as any)._fbclid,
+    });
+  });
+
   return order;
 };
 
