@@ -10,6 +10,7 @@ import { OrderRoutes } from '../modules/Order/order.route';
 import { NewslatterRoutes } from '../modules/Newslatter/newslatter.route';
 import { UploadRoutes } from '../modules/Upload/upload.route';
 import { SettingsRoutes } from '../modules/Settings/settings.route';
+import { ScentFinderRoutes } from '../modules/ScentFinder/scentfinder.route';
 // --- INJECT IMPORTS HERE ---
 
 const router = Router();
@@ -26,6 +27,7 @@ const moduleRoutes = [
   { path: '/newsletter', route: NewslatterRoutes },
   { path: '/uploads', route: UploadRoutes },
   { path: '/settings', route: SettingsRoutes },
+  { path: '/scent-finder/questions', route: ScentFinderRoutes },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
