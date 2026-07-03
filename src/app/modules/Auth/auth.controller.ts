@@ -9,7 +9,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: 'lax' as const,
+  sameSite: isProduction ? ('none' as const) : ('lax' as const),
   path: '/',
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };
@@ -39,7 +39,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
 });
 
 const logout = catchAsync(async (_req: Request, res: Response) => {
-  res.clearCookie('sg_session', { path: '/' });
+  res.clearCookie('sg_session', cookieOptions);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
