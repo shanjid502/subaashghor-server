@@ -15,5 +15,15 @@ router.post(
   validateRequest(ReviewValidation.createReviewSchema),
   ReviewController.createReview,
 );
+router.patch(
+  '/:id',
+  auth(USER_ROLE.admin),
+  ReviewController.updateReview,
+);
+router.delete(
+  '/:id',
+  auth(USER_ROLE.admin),
+  ReviewController.deleteReview,
+);
 
 export const ReviewRoutes = router;

@@ -1,27 +1,21 @@
-import { Schema, model, Types } from 'mongoose';
-
-export interface IReview {
-  _id?: string;
-  productId: Types.ObjectId;
-  productSlug?: string;
-  userId: Types.ObjectId;
-  userName: string;
-  userLocation?: string;
-  rating: number;
-  title?: string;
-  body: string;
-  photos?: string[];
-  status?: 'pending' | 'published' | 'rejected';
-  featured?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { Schema, model } from 'mongoose';
+import { IReview } from './review.interface';
 
 const reviewSchema = new Schema<IReview>(
   {
-    productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true, index: true },
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+      index: true,
+    },
     productSlug: { type: String, index: true },
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
     userName: { type: String, required: true },
     userLocation: String,
     rating: { type: Number, required: true, min: 1, max: 5 },
