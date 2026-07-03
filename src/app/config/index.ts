@@ -15,10 +15,12 @@ export default {
   cors_origin: process.env.CORS_ORIGIN,
   bcrypt_rounds: process.env.BCRYPT_ROUNDS,
   password_reset_secret: process.env.PASSWORD_RESET_SECRET,
-  password_reset_secret_expires_in: process.env.PASSWORD_RESET_SECRET_EXPIRES_IN,
+  password_reset_secret_expires_in:
+    process.env.PASSWORD_RESET_SECRET_EXPIRES_IN,
   cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
   cloudinary_api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloudinary_url: process.env.CLOUDINARY_URL,
   super_admin_email: process.env.SUPER_ADMIN_EMAIL,
   super_admin_phone: process.env.SUPER_ADMIN_PHONE,
   super_admin_pass: process.env.SUPER_ADMIN_PASS,

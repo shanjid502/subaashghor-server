@@ -1,3 +1,12 @@
+import https from 'https';
+import http from 'http';
+
+// Force IPv4 for all HTTP/HTTPS outgoing requests to prevent NAT64/IPv6 connection timeouts
+(https.globalAgent as any).options = (https.globalAgent as any).options || {};
+(https.globalAgent as any).options.family = 4;
+(http.globalAgent as any).options = (http.globalAgent as any).options || {};
+(http.globalAgent as any).options.family = 4;
+
 import mongoose from 'mongoose';
 import app from './app';
 import config from './app/config';
