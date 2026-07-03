@@ -52,4 +52,16 @@ router.get(
   UserController.getAllUsers,
 );
 
+router.post(
+  '/users/staff',
+  auth(USER_ROLE.admin),
+  UserController.createStaffAdmin,
+);
+
+router.delete(
+  '/users/:id',
+  auth(USER_ROLE.admin),
+  UserController.deleteUser,
+);
+
 export const UserRoutes = router;

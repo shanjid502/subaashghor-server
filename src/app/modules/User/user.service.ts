@@ -158,8 +158,9 @@ const getAllUsers = async (query: Record<string, any>) => {
     id: String(u._id),
     _id: String(u._id),
     name: u.name,
-    email: u.email || 'no-email@subaashghor.com',
-    phone: u.phone,
+    email: u.email || '',
+    phone: u.phone || '',
+    role: u.role || 'admin',
     orders: u.orders,
     spent: u.spent,
     joined: u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : 'N/A',
@@ -193,6 +194,15 @@ const createStaffAdmin = async (payload: any) => {
   return staff;
 };
 
+const deleteUser = async (id: string) => {
+  const user = await UserModel.findById(id);
+  if (!user) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
+  }
+  await UserModel.findByIdAndDelete(id);
+  return { ok: true };
+};
+
 export const UserService = {
   updateProfile,
   getAddresses,
@@ -202,4 +212,5 @@ export const UserService = {
   setDefaultAddress,
   getAllUsers,
   createStaffAdmin,
+  deleteUser,
 };

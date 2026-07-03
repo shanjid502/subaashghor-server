@@ -87,6 +87,16 @@ const createStaffAdmin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.deleteUser(req.params.id);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateProfile,
   getAddresses,
@@ -96,4 +106,5 @@ export const UserController = {
   setDefaultAddress,
   getAllUsers,
   createStaffAdmin,
+  deleteUser,
 };
