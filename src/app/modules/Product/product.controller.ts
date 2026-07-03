@@ -65,6 +65,38 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const bulkUpdateProducts = catchAsync(async (req: Request, res: Response) => {
+  let csvText = '';
+  if (req.file) {
+    csvText = req.file.buffer.toString('utf-8');
+  } else if (req.body.csv) {
+    csvText = req.body.csv;
+  } else if (typeof req.body === 'string') {
+    csvText = req.body;
+  }
+
+  const result = await ProductService.bulkUpdateProducts(csvText);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Products bulk updated successfully',
+    data: result,
+  });
+});
+
+const exportInventoryCSV = catchAsync(async (_req: Request, res: Response) => {
+  const csv = await ProductService.exportInventoryCSV();
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="inventory-export.csv"');
+  res.status(StatusCodes.OK).send(csv);
+});
+
+const getFacebookProductFeed = catchAsync(async (_req: Request, res: Response) => {
+  const xml = await ProductService.generateFacebookProductFeed();
+  res.setHeader('Content-Type', 'application/xml');
+  res.status(StatusCodes.OK).send(xml);
+});
+
 export const ProductController = {
   getAllProducts,
   getFeaturedProducts,
@@ -72,4 +104,7 @@ export const ProductController = {
   createProduct,
   updateProduct,
   deleteProduct,
+  bulkUpdateProducts,
+  exportInventoryCSV,
+  getFacebookProductFeed,
 };

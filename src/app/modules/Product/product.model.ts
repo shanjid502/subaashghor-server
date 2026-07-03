@@ -1,38 +1,5 @@
 import { Schema, model } from 'mongoose';
-
-export interface ISize {
-  ml: number;
-  price: number;
-  salePrice?: number;
-  stock: number;
-  sku?: string;
-}
-
-export interface IProduct {
-  _id?: string;
-  slug: string;
-  name: { bn: string; en: string };
-  tagline: { bn: string; en: string };
-  description?: { bn: string; en: string };
-  images: string[];
-  price: number;
-  salePrice?: number;
-  saleEndsAt?: Date;
-  badge?: { bn: string; en: string };
-  badges?: string[];
-  notes: {
-    top: string[];
-    heart: string[];
-    base: string[];
-  };
-  category: 'men' | 'women' | 'attar' | 'unisex';
-  collections: string[];
-  sizes: ISize[];
-  rating?: number;
-  reviewCount?: number;
-  pairsWith?: string[];
-  isActive?: boolean;
-}
+import { ISize, INoteItem, IProduct } from './product.interface';
 
 const sizeSchema = new Schema<ISize>({
   ml: { type: Number, required: true, min: 1 },
@@ -42,9 +9,23 @@ const sizeSchema = new Schema<ISize>({
   sku: { type: String, trim: true },
 });
 
+const noteItemSchema = new Schema<INoteItem>(
+  {
+    name: { type: String, required: true },
+    icon: { type: String },
+  },
+  { _id: false },
+);
+
 const productSchema = new Schema<IProduct>(
   {
-    slug: { type: String, required: true, unique: true, lowercase: true, index: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      index: true,
+    },
     name: {
       bn: { type: String, required: true },
       en: { type: String, required: true },
@@ -67,9 +48,9 @@ const productSchema = new Schema<IProduct>(
     },
     badges: [String],
     notes: {
-      top: [{ type: String }],
-      heart: [{ type: String }],
-      base: [{ type: String }],
+      top: [noteItemSchema],
+      heart: [noteItemSchema],
+      base: [noteItemSchema],
     },
     category: {
       type: String,
@@ -83,6 +64,7 @@ const productSchema = new Schema<IProduct>(
     reviewCount: { type: Number, default: 0 },
     pairsWith: [String],
     isActive: { type: Boolean, default: true, index: true },
+    lowStockThreshold: { type: Number, default: 5 },
   },
   {
     timestamps: true,
@@ -100,11 +82,11 @@ const productSchema = new Schema<IProduct>(
 
 // Create compound text index for search support
 productSchema.index({
-  "name.en": "text",
-  "name.bn": "text",
-  "tagline.en": "text",
-  "tagline.bn": "text",
-  tags: "text",
+  'name.en': 'text',
+  'name.bn': 'text',
+  'tagline.en': 'text',
+  'tagline.bn': 'text',
+  tags: 'text',
 });
 
 export const ProductModel = model<IProduct>('Product', productSchema);

@@ -11,7 +11,10 @@ import { NewslatterRoutes } from '../modules/Newslatter/newslatter.route';
 import { UploadRoutes } from '../modules/Upload/upload.route';
 import { SettingsRoutes } from '../modules/Settings/settings.route';
 import { ScentFinderRoutes } from '../modules/ScentFinder/scentfinder.route';
+import { ProductController } from '../modules/Product/product.controller';
 // --- INJECT IMPORTS HERE ---
+const fbFeedRouter = Router();
+fbFeedRouter.get('/', ProductController.getFacebookProductFeed);
 
 const router = Router();
 
@@ -28,6 +31,7 @@ const moduleRoutes = [
   { path: '/uploads', route: UploadRoutes },
   { path: '/settings', route: SettingsRoutes },
   { path: '/scent-finder/questions', route: ScentFinderRoutes },
+  { path: '/fb-product-feed', route: fbFeedRouter },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));
