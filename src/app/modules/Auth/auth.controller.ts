@@ -5,11 +5,10 @@ import sendResponse from '../../utils/sendResponse';
 import { AuthService } from './auth.service';
 import { UserModel } from './auth.model';
 
-const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? ('none' as const) : ('lax' as const),
+  secure: true, // Always true to allow SameSite=None
+  sameSite: 'none' as const, // Always 'none' to allow cross-origin sessions in dev/prod
   path: '/',
   maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 };

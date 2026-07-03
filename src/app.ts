@@ -27,7 +27,18 @@ app.use(
 );
 app.use(
   cors({
-    origin: config.cors_origin ? config.cors_origin.split(',') : true,
+    origin: (origin, callback) => {
+      if (process.env.NODE_ENV !== 'production' || !origin) {
+        callback(null, true);
+      } else {
+        const allowedOrigins = config.cors_origin ? config.cors_origin.split(',') : [];
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
     credentials: true,
   }),
 );
