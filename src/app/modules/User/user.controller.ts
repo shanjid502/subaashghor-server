@@ -77,6 +77,16 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createStaffAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.createStaffAdmin(req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.CREATED,
+    success: true,
+    message: 'Staff admin created successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateProfile,
   getAddresses,
@@ -85,4 +95,5 @@ export const UserController = {
   deleteAddress,
   setDefaultAddress,
   getAllUsers,
+  createStaffAdmin,
 };

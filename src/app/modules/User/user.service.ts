@@ -166,6 +166,33 @@ const getAllUsers = async (query: Record<string, any>) => {
   }));
 };
 
+const createStaffAdmin = async (payload: any) => {
+  const { name, email, phone, password } = payload;
+  
+  if (!name || !phone || !password) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Name, phone, and password are required');
+  }
+
+  // Check if user already exists
+  const existingUser = await UserModel.findOne({
+    $or: [{ phone }, ...(email ? [{ email }] : [])],
+  });
+
+  if (existingUser) {
+    throw new AppError(StatusCodes.CONFLICT, 'User with this email or phone already exists');
+  }
+
+  const staff = await UserModel.create({
+    name,
+    email,
+    phone,
+    passwordHash: password, // Mongoose hook will hash this
+    role: 'admin',
+  });
+
+  return staff;
+};
+
 export const UserService = {
   updateProfile,
   getAddresses,
@@ -174,4 +201,5 @@ export const UserService = {
   deleteAddress,
   setDefaultAddress,
   getAllUsers,
+  createStaffAdmin,
 };

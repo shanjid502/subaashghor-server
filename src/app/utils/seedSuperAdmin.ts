@@ -17,12 +17,21 @@ export const seedSuperAdmin = async () => {
     });
 
     if (existingAdmin) {
-      console.log('✨ Super admin already exists in the database. Skipping seed.');
+      const adminName = (config.super_admin_name || 'Super Admin').replace(/['"]/g, '').trim();
+      if (existingAdmin.name !== adminName) {
+        existingAdmin.name = adminName;
+        await existingAdmin.save();
+        console.log(`✨ Updated existing Super Admin name to: "${adminName}"`);
+      } else {
+        console.log('✨ Super admin already exists in the database. Skipping seed.');
+      }
       return;
     }
 
+    const adminName = (config.super_admin_name || 'Super Admin').replace(/['"]/g, '').trim();
+
     await UserModel.create({
-      name: 'Super Admin',
+      name: adminName,
       email,
       phone,
       passwordHash: password, // Mongoose pre-save hook will hash this
