@@ -1,3 +1,12 @@
+import https from 'https';
+import http from 'http';
+
+// Force IPv4 for all HTTP/HTTPS outgoing requests to prevent NAT64/IPv6 connection timeouts
+(https.globalAgent as any).options = (https.globalAgent as any).options || {};
+(https.globalAgent as any).options.family = 4;
+(http.globalAgent as any).options = (http.globalAgent as any).options || {};
+(http.globalAgent as any).options.family = 4;
+
 import { v2 as cloudinary } from 'cloudinary';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
@@ -317,6 +326,41 @@ const seed = async () => {
           bn: 'বিশুদ্ধ, অ্যালকোহল-মুক্ত জুঁই নোয়ার আতরে রাতে ফোটা জুঁই ফুলের তীব্র সুগন্ধ অনুভব করুন।'
         },
         faqs: []
+      },
+      {
+        slug: 'white-musk-premium',
+        name: { en: 'White Musk Premium', bn: 'হোয়াইট মাস্ক প্রিমিয়াম' },
+        tagline: { en: 'Velvety Smooth White Musk', bn: 'মখমলি মসৃণ সাদা কস্তুরী' },
+        description: {
+          en: 'A silky, powder-soft fragrance built on the finest white musk extracts.',
+          bn: 'সবচেয়ে সূক্ষ্ম সাদা কস্তুরীর নির্যাসের উপর তৈরি একটি রেশমি, গুঁড়ো-নরম সুবাস।'
+        },
+        images: [urlMusk],
+        price: 1500,
+        badge: { en: 'Low Stock', bn: 'সীমিত স্টক' },
+        badges: ['Low Stock'],
+        notes: {
+          top: [{ name: 'White Musk', icon: urlMusk }],
+          heart: [{ name: 'Bergamot', icon: urlBergamot }],
+          base: [{ name: 'Sandalwood', icon: urlSandalwood }]
+        },
+        category: 'unisex',
+        collections: ['unisex', 'attar'],
+        sizes: [
+          { ml: 3, price: 400, stock: 1, sku: 'WHT-MSK-3ML' },
+          { ml: 6, price: 750, stock: 1, sku: 'WHT-MSK-6ML' },
+          { ml: 12, price: 1400, stock: 1, sku: 'WHT-MSK-12ML' }
+        ],
+        rating: 4.7,
+        reviewCount: 0,
+        pairsWith: ['jasmine-noir'],
+        isActive: true,
+        metaTitle: { en: 'White Musk Premium Attar - Subaashghor', bn: 'হোয়াইট মাস্ক প্রিমিয়াম আতর - সুবাসঘর' },
+        metaDescription: {
+          en: 'Velvety smooth and alcohol-free pure white musk attar oil.',
+          bn: 'মখমলি মসৃণ এবং অ্যালকোহল-মুক্ত খাঁটি সাদা কস্তুরী আতর তেল।'
+        },
+        faqs: []
       }
     ];
 
@@ -493,229 +537,106 @@ Attar, on the other hand, uses pure carrier oils (like sandalwood oil or jojoba)
     console.log('Creating Orders...');
     const now = Date.now();
     const oneDay = 24 * 60 * 60 * 1000;
-    
-    const ordersData = [
-      // Order 1: 14 days ago - Delivered
+
+    const statuses = ['pending', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
+    const paymentMethods = ['cod', 'bkash'];
+    const customers = [
       {
-        orderNumber: 'SG-1001',
         userId: customerUser._id,
-        items: [
-          {
-            productId: insertedProducts[0]._id,
-            slug: 'oud-royale',
-            name: 'Oud Royale (6ml)',
-            image: urlOud,
-            ml: 6,
-            price: 1600,
-            qty: 1,
-          }
-        ],
-        shipping: {
-          name: 'Rahim Uddin',
-          phone: '01812345678',
-          address: 'House 42, Road 9A, Dhanmondi',
-          area: 'Dhanmondi',
-          city: 'Dhaka',
-          district: 'Dhaka',
-          postcode: '1209',
-        },
-        subtotal: 1600,
-        shippingFee: 60,
-        discount: 0,
-        total: 1660,
-        paymentMethod: 'cod',
-        paymentStatus: 'paid',
-        status: 'delivered',
-        createdAt: new Date(now - 14 * oneDay),
+        name: 'Rahim Uddin',
+        phone: '01812345678',
+        address: 'House 42, Road 9A, Dhanmondi',
+        area: 'Dhanmondi',
+        city: 'Dhaka',
+        district: 'Dhaka',
+        postcode: '1209',
       },
-      // Order 2: 10 days ago - Delivered
       {
-        orderNumber: 'SG-1002',
         userId: customerUser2._id,
-        items: [
-          {
-            productId: insertedProducts[1]._id,
-            slug: 'rose-musk',
-            name: 'Rose Musk (12ml)',
-            image: urlRose,
-            ml: 12,
-            price: 1990,
-            qty: 1,
-          },
-          {
-            productId: insertedProducts[2]._id,
-            slug: 'jasmine-noir',
-            name: 'Jasmine Noir (3ml)',
-            image: urlJasmine,
-            ml: 3,
-            price: 500,
-            qty: 2,
-          }
-        ],
-        shipping: {
-          name: 'Nusrat Jahan',
-          phone: '01987654321',
-          address: 'GEC Circle, Hill View Area',
-          area: 'GEC',
-          city: 'Chittagong',
-          district: 'Chittagong',
-          postcode: '4000',
-        },
-        subtotal: 2990,
-        shippingFee: 120,
-        discount: 299, // 10% coupon WELCOME10
-        couponCode: 'WELCOME10',
-        total: 2811,
-        paymentMethod: 'bkash',
-        paymentStatus: 'paid',
-        status: 'delivered',
-        createdAt: new Date(now - 10 * oneDay),
+        name: 'Nusrat Jahan',
+        phone: '01987654321',
+        address: 'GEC Circle, Hill View Area',
+        area: 'GEC',
+        city: 'Chittagong',
+        district: 'Chittagong',
+        postcode: '4000',
       },
-      // Order 3: 7 days ago - Shipped
       {
-        orderNumber: 'SG-1003',
         userId: customerUser._id,
-        items: [
-          {
-            productId: insertedProducts[0]._id,
-            slug: 'oud-royale',
-            name: 'Oud Royale (12ml)',
-            image: urlOud,
-            ml: 12,
-            price: 2990,
-            qty: 1,
-          }
-        ],
-        shipping: {
-          name: 'Rahim Uddin',
-          phone: '01812345678',
-          address: 'House 42, Road 9A, Dhanmondi',
-          area: 'Dhanmondi',
-          city: 'Dhaka',
-          district: 'Dhaka',
-          postcode: '1209',
-        },
-        subtotal: 2990,
-        shippingFee: 60,
-        discount: 200, // SUBASH200
-        couponCode: 'SUBASH200',
-        total: 2850,
-        paymentMethod: 'cod',
-        paymentStatus: 'pending',
-        status: 'shipped',
-        trackingId: 'STE-998811',
-        createdAt: new Date(now - 7 * oneDay),
+        name: 'Tanvir Hossain',
+        phone: '01711223344',
+        address: 'Sector 4, Uttara',
+        area: 'Uttara',
+        city: 'Dhaka',
+        district: 'Dhaka',
+        postcode: '1230',
       },
-      // Order 4: 4 days ago - Confirmed
-      {
-        orderNumber: 'SG-1004',
-        userId: customerUser2._id,
-        items: [
-          {
-            productId: insertedProducts[2]._id,
-            slug: 'jasmine-noir',
-            name: 'Jasmine Noir (12ml)',
-            image: urlJasmine,
-            ml: 12,
-            price: 1800,
-            qty: 1,
-          }
-        ],
-        shipping: {
-          name: 'Nusrat Jahan',
-          phone: '01987654321',
-          address: 'GEC Circle, Hill View Area',
-          area: 'GEC',
-          city: 'Chittagong',
-          district: 'Chittagong',
-          postcode: '4000',
-        },
-        subtotal: 1800,
-        shippingFee: 120,
-        discount: 0,
-        total: 1920,
-        paymentMethod: 'bkash',
-        paymentStatus: 'paid',
-        status: 'confirmed',
-        createdAt: new Date(now - 4 * oneDay),
-      },
-      // Order 5: 1 day ago - Pending
-      {
-        orderNumber: 'SG-1005',
-        userId: customerUser._id,
-        items: [
-          {
-            productId: insertedProducts[1]._id,
-            slug: 'rose-musk',
-            name: 'Rose Musk (6ml)',
-            image: urlRose,
-            ml: 6,
-            price: 1100,
-            qty: 1,
-          }
-        ],
-        shipping: {
-          name: 'Rahim Uddin',
-          phone: '01812345678',
-          address: 'House 42, Road 9A, Dhanmondi',
-          area: 'Dhanmondi',
-          city: 'Dhaka',
-          district: 'Dhaka',
-          postcode: '1209',
-        },
-        subtotal: 1100,
-        shippingFee: 60,
-        discount: 0,
-        total: 1160,
-        paymentMethod: 'cod',
-        paymentStatus: 'pending',
-        status: 'pending',
-        createdAt: new Date(now - 1 * oneDay),
-      },
-      // Order 6: Today - Pending
-      {
-        orderNumber: 'SG-1006',
-        userId: customerUser2._id,
-        items: [
-          {
-            productId: insertedProducts[0]._id,
-            slug: 'oud-royale',
-            name: 'Oud Royale (3ml)',
-            image: urlOud,
-            ml: 3,
-            price: 890,
-            qty: 1,
-          },
-          {
-            productId: insertedProducts[2]._id,
-            slug: 'jasmine-noir',
-            name: 'Jasmine Noir (6ml)',
-            image: urlJasmine,
-            ml: 6,
-            price: 950,
-            qty: 1,
-          }
-        ],
-        shipping: {
-          name: 'Nusrat Jahan',
-          phone: '01987654321',
-          address: 'GEC Circle, Hill View Area',
-          area: 'GEC',
-          city: 'Chittagong',
-          district: 'Chittagong',
-          postcode: '4000',
-        },
-        subtotal: 1840,
-        shippingFee: 120,
-        discount: 184, // WELCOME10
-        couponCode: 'WELCOME10',
-        total: 1776,
-        paymentMethod: 'bkash',
-        paymentStatus: 'pending',
-        status: 'pending',
-        createdAt: new Date(now),
-      }
     ];
+
+    const ordersData = [];
+    let orderNum = 1001;
+
+    // Generate 35 mock orders spread across the last 14 days
+    for (let dayOffset = 14; dayOffset >= 0; dayOffset--) {
+      // 1 to 4 orders per day
+      const ordersCount = Math.floor(Math.random() * 3) + 1; 
+      for (let j = 0; j < ordersCount; j++) {
+        const customer = customers[Math.floor(Math.random() * customers.length)];
+        const productIndex = Math.floor(Math.random() * insertedProducts.length);
+        const product = insertedProducts[productIndex];
+        const qty = Math.floor(Math.random() * 2) + 1; // 1 or 2 items
+        const price = product.salePrice || product.price;
+        const subtotal = price * qty;
+        const shippingFee = customer.city === 'Dhaka' ? 60 : 120;
+        const discount = Math.random() > 0.7 ? 100 : 0;
+        const total = subtotal + shippingFee - discount;
+
+        // Determine status based on age of the order
+        let status = 'pending';
+        if (dayOffset > 7) {
+          status = Math.random() > 0.08 ? 'delivered' : 'cancelled';
+        } else if (dayOffset > 3) {
+          status = Math.random() > 0.3 ? 'shipped' : (Math.random() > 0.5 ? 'confirmed' : 'pending');
+        } else {
+          status = Math.random() > 0.6 ? 'confirmed' : 'pending';
+        }
+
+        const orderDate = new Date(now - dayOffset * oneDay - Math.floor(Math.random() * 12) * 60 * 60 * 1000);
+
+        ordersData.push({
+          orderNumber: `SG-${orderNum++}`,
+          userId: customer.userId,
+          items: [
+            {
+              productId: product._id,
+              slug: product.slug,
+              name: `${product.name.en} (6ml)`,
+              image: product.images[0],
+              ml: 6,
+              price: price,
+              qty: qty,
+            }
+          ],
+          shipping: {
+            name: customer.name,
+            phone: customer.phone,
+            address: customer.address,
+            area: customer.area,
+            city: customer.city,
+            district: customer.district,
+            postcode: customer.postcode,
+          },
+          subtotal,
+          shippingFee,
+          discount,
+          total,
+          paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+          paymentStatus: status === 'delivered' ? 'paid' : (Math.random() > 0.5 ? 'paid' : 'pending'),
+          status,
+          createdAt: orderDate,
+        });
+      }
+    }
 
     await OrderModel.insertMany(ordersData);
     console.log(`Created ${ordersData.length} mock orders with historical dates.`);

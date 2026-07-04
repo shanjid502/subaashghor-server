@@ -87,6 +87,14 @@ const productSchema = new Schema<IProduct>(
         },
       },
     ],
+    metaKeywords: { type: String, default: '' },
+    canonicalUrl: { type: String, default: '' },
+    socialImage: { type: String, default: '' },
+    robotsMeta: {
+      noindex: { type: Boolean, default: false },
+      nofollow: { type: Boolean, default: false },
+      noarchive: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,

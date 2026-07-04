@@ -44,6 +44,14 @@ export interface IProduct {
     question: { bn: string; en: string };
     answer: { bn: string; en: string };
   }[];
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  socialImage?: string;
+  robotsMeta?: {
+    noindex?: boolean;
+    nofollow?: boolean;
+    noarchive?: boolean;
+  };
 }
 
 export interface IFaq {

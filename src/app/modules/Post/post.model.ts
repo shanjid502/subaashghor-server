@@ -25,6 +25,14 @@ export interface IPost {
     question: { bn: string; en: string };
     answer: { bn: string; en: string };
   }[];
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  socialImage?: string;
+  robotsMeta?: {
+    noindex?: boolean;
+    nofollow?: boolean;
+    noarchive?: boolean;
+  };
 }
 
 const postSchema = new Schema<IPost>(
@@ -78,6 +86,14 @@ const postSchema = new Schema<IPost>(
         },
       },
     ],
+    metaKeywords: { type: String, default: '' },
+    canonicalUrl: { type: String, default: '' },
+    socialImage: { type: String, default: '' },
+    robotsMeta: {
+      noindex: { type: Boolean, default: false },
+      nofollow: { type: Boolean, default: false },
+      noarchive: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,
