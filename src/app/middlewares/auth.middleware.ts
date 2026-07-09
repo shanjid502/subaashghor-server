@@ -16,7 +16,10 @@ declare global {
 const auth = (...requiredRoles: string[]) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      const token = req.cookies?.sg_session;
+      let token = req.cookies?.sg_session;
+      if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+      }
 
       if (!token) {
         return next(new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized!'));
@@ -43,7 +46,10 @@ const auth = (...requiredRoles: string[]) => {
 
 export const optionalAuth = (req: Request, _res: Response, next: NextFunction): void => {
   try {
-    const token = req.cookies?.sg_session;
+    let token = req.cookies?.sg_session;
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
     if (token) {
       const decoded = verifyToken(token, config.jwt_access_secret as string);
       req.user = decoded as JwtPayload & { userId: string; role: string };
