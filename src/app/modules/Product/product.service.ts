@@ -103,7 +103,13 @@ const getFeaturedProducts = async () => {
 };
 
 const getProductBySlug = async (slug: string) => {
-  const product = await ProductModel.findOne({ slug });
+  let product = null;
+  if (slug.match(/^[0-9a-fA-F]{24}$/)) {
+    product = await ProductModel.findById(slug);
+  }
+  if (!product) {
+    product = await ProductModel.findOne({ slug });
+  }
   if (!product) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
   }
