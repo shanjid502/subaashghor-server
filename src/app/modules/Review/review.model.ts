@@ -13,7 +13,7 @@ const reviewSchema = new Schema<IReview>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false,
       index: true,
     },
     userName: { type: String, required: true },
@@ -38,7 +38,7 @@ const reviewSchema = new Schema<IReview>(
       transform: (_, ret: any) => {
         ret._id = String(ret._id);
         ret.productId = String(ret.productId);
-        ret.userId = String(ret.userId);
+        if (ret.userId) ret.userId = String(ret.userId);
         delete ret.id;
         return ret;
       },
@@ -46,7 +46,13 @@ const reviewSchema = new Schema<IReview>(
   },
 );
 
-// Prevent duplicate reviews per user/product
-reviewSchema.index({ productId: 1, userId: 1 }, { unique: true });
+// Prevent duplicate reviews per user/product, only when userId exists
+reviewSchema.index(
+  { productId: 1, userId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { userId: { $exists: true, $ne: null } },
+  },
+);
 
 export const ReviewModel = model<IReview>('Review', reviewSchema);

@@ -61,17 +61,21 @@ const createReview = async (userId: string, payload: any) => {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
   }
 
-  // Check if review already exists
-  const existingReview = await ReviewModel.findOne({
-    productId: payload.productId,
-    userId,
-  });
+  const isAdmin = user.role === 'admin';
 
-  if (existingReview) {
-    throw new AppError(
-      StatusCodes.CONFLICT,
-      'You have already reviewed this product',
-    );
+  if (!isAdmin) {
+    // Check if review already exists (only for regular customers)
+    const existingReview = await ReviewModel.findOne({
+      productId: payload.productId,
+      userId,
+    });
+
+    if (existingReview) {
+      throw new AppError(
+        StatusCodes.CONFLICT,
+        'You have already reviewed this product',
+      );
+    }
   }
 
   const product = await ProductModel.findById(payload.productId);
@@ -79,13 +83,16 @@ const createReview = async (userId: string, payload: any) => {
     throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
   }
 
-  const location = user.addresses?.[0]?.city || 'Dhaka';
+  const name = isAdmin && payload.userName ? payload.userName : user.name;
+  const location = isAdmin && payload.userLocation
+    ? payload.userLocation
+    : (user.addresses?.[0]?.city || 'Dhaka');
 
   const newReview = await ReviewModel.create({
     productId: payload.productId,
     productSlug: product.slug,
-    userId,
-    userName: user.name,
+    userId: isAdmin ? undefined : userId, // Do not tie manually created admin reviews to the admin's own user ID
+    userName: name,
     userLocation: location,
     rating: payload.rating,
     title: payload.title,

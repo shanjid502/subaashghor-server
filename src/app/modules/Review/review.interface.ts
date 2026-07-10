@@ -4,7 +4,7 @@ export interface IReview {
   _id?: string;
   productId: Types.ObjectId;
   productSlug?: string;
-  userId: Types.ObjectId;
+  userId?: Types.ObjectId;
   userName: string;
   userLocation?: string;
   rating: number;

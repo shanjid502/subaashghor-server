@@ -7,6 +7,8 @@ const createReviewSchema = z.object({
     title: z.string().max(120).optional(),
     body: z.string().min(5, 'Review body must be at least 5 characters'),
     photos: z.array(z.string().url()).optional(),
+    userName: z.string().optional(),
+    userLocation: z.string().optional(),
   }),
 });
 
