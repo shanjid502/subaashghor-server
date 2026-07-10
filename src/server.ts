@@ -12,11 +12,19 @@ import app from './app';
 import config from './app/config';
 import { seedSuperAdmin } from './app/utils/seedSuperAdmin';
 import { ScentFinderService } from './app/modules/ScentFinder/scentfinder.service';
+import { ReviewModel } from './app/modules/Review/review.model';
 
 async function bootstrap() {
   try {
     await mongoose.connect(config.databaseUrl);
     console.log('✅ MongoDB connected');
+
+    try {
+      await ReviewModel.cleanIndexes();
+      console.log('✅ Review indexes cleaned & synchronized');
+    } catch (indexError) {
+      console.error('⚠️ Failed to sync Review indexes:', indexError);
+    }
 
     // Seed super admin account if not present
     await seedSuperAdmin();
@@ -25,7 +33,8 @@ async function bootstrap() {
     await ScentFinderService.seedDefaultQuestions();
 
     app.listen(config.port, () => {
-      console.log(`🚀 Server running on http://localhost:${config.port}`);
+      config.NODE_ENV === 'development' &&
+        console.log(`🚀 Server running on http://localhost:${config.port}`);
     });
   } catch (error) {
     console.error('❌ Failed to connect to MongoDB:', error);
