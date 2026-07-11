@@ -2,7 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { UserModel, IAddress } from '../Auth/auth.model';
 
-const updateProfile = async (userId: string, payload: { name?: string; avatarUrl?: string }) => {
+const updateProfile = async (
+  userId: string,
+  payload: { name?: string; avatarUrl?: string },
+) => {
   const user = await UserModel.findById(userId);
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
@@ -43,7 +46,11 @@ const addAddress = async (userId: string, address: IAddress) => {
   return user.addresses[user.addresses.length - 1];
 };
 
-const updateAddress = async (userId: string, index: number, address: IAddress) => {
+const updateAddress = async (
+  userId: string,
+  index: number,
+  address: IAddress,
+) => {
   const user = await UserModel.findById(userId);
   if (!user) {
     throw new AppError(StatusCodes.NOT_FOUND, 'User not found');
@@ -154,24 +161,38 @@ const getAllUsers = async (query: Record<string, any>) => {
     },
   ]);
 
-  return users.map((u) => ({
-    id: String(u._id),
-    _id: String(u._id),
-    name: u.name,
-    email: u.email || '',
-    phone: u.phone || '',
-    role: u.role || 'admin',
-    orders: u.orders,
-    spent: u.spent,
-    joined: u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : 'N/A',
-  }));
+  return users.map((u) => {
+    let phone = u.phone || '';
+    if ((u.role === 'admin' || u.role === 'staff') && phone.length >= 7) {
+      const prefix = phone.slice(0, 5);
+      const suffix = phone.slice(-2);
+      const maskLength = Math.max(0, phone.length - 7);
+      phone = `${prefix}${'*'.repeat(maskLength)}${suffix}`;
+    }
+    return {
+      id: String(u._id),
+      _id: String(u._id),
+      name: u.name,
+      email: u.email || '',
+      phone,
+      role: u.role || 'admin',
+      orders: u.orders,
+      spent: u.spent,
+      joined: u.createdAt
+        ? new Date(u.createdAt).toISOString().split('T')[0]
+        : 'N/A',
+    };
+  });
 };
 
 const createStaffAdmin = async (payload: any) => {
   const { name, email, phone, password } = payload;
-  
+
   if (!name || !phone || !password) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Name, phone, and password are required');
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Name, phone, and password are required',
+    );
   }
 
   // Check if user already exists
@@ -180,7 +201,10 @@ const createStaffAdmin = async (payload: any) => {
   });
 
   if (existingUser) {
-    throw new AppError(StatusCodes.CONFLICT, 'User with this email or phone already exists');
+    throw new AppError(
+      StatusCodes.CONFLICT,
+      'User with this email or phone already exists',
+    );
   }
 
   const staff = await UserModel.create({

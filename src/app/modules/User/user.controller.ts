@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { UserService } from './user.service';
+import { sanitizeUser } from '../../utils/sanitizeUser';
 
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const result = await UserService.updateProfile(req.user!.userId, req.body);
@@ -10,7 +11,7 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Profile updated successfully',
-    data: result,
+    data: sanitizeUser(result),
   });
 });
 
@@ -36,7 +37,11 @@ const addAddress = catchAsync(async (req: Request, res: Response) => {
 
 const updateAddress = catchAsync(async (req: Request, res: Response) => {
   const index = Number(req.params.index);
-  const result = await UserService.updateAddress(req.user!.userId, index, req.body);
+  const result = await UserService.updateAddress(
+    req.user!.userId,
+    index,
+    req.body,
+  );
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -83,7 +88,7 @@ const createStaffAdmin = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.CREATED,
     success: true,
     message: 'Staff admin created successfully',
-    data: result,
+    data: sanitizeUser(result),
   });
 });
 

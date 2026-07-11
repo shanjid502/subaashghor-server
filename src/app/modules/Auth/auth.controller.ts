@@ -4,6 +4,7 @@ import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { AuthService } from './auth.service';
 import { UserModel } from './auth.model';
+import { sanitizeUser } from '../../utils/sanitizeUser';
 
 const cookieOptions = {
   httpOnly: true,
@@ -21,7 +22,7 @@ const signup = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.CREATED,
     success: true,
     message: 'User registered successfully',
-    data: result.user,
+    data: sanitizeUser(result.user),
   });
 });
 
@@ -33,7 +34,7 @@ const login = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'User logged in successfully',
-    data: result.user,
+    data: sanitizeUser(result.user),
   });
 });
 
@@ -64,7 +65,7 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Profile fetched successfully',
-    data: user,
+    data: sanitizeUser(user),
   });
 });
 
@@ -73,7 +74,8 @@ const forgotPassword = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
-    message: 'If a matching user exists, the reset code or link has been dispatched.',
+    message:
+      'If a matching user exists, the reset code or link has been dispatched.',
     data: result,
   });
 });
@@ -104,14 +106,18 @@ const requestOtp = catchAsync(async (req: Request, res: Response) => {
 });
 
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthService.verifyOtp(req.body.phone, req.body.code, req.body.purpose);
+  const result = await AuthService.verifyOtp(
+    req.body.phone,
+    req.body.code,
+    req.body.purpose,
+  );
   res.cookie('sg_session', result.accessToken, cookieOptions);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Phone verified and logged in successfully',
-    data: result.user,
+    data: sanitizeUser(result.user),
   });
 });
 
