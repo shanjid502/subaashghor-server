@@ -13,7 +13,19 @@ const getSettings = catchAsync(async (req: Request, res: Response) => {
 
   const isAdmin = req.user && req.user.role?.toLowerCase() === 'admin';
 
-  if (!isAdmin) {
+  if (isAdmin) {
+    if (settingsObj.pixels) {
+      settingsObj.pixels.fbCapiToken = settingsObj.pixels.fbCapiToken
+        ? '********'
+        : '';
+    }
+    if (settingsObj.mailchimp) {
+      settingsObj.mailchimp.apiKey = settingsObj.mailchimp.apiKey
+        ? '********'
+        : '';
+    }
+    settingsObj.webhookUrl = settingsObj.webhookUrl ? '********' : '';
+  } else {
     if (settingsObj.pixels) {
       delete settingsObj.pixels.fbCapiToken;
     }
@@ -33,11 +45,35 @@ const getSettings = catchAsync(async (req: Request, res: Response) => {
 
 const updateSettings = catchAsync(async (req: Request, res: Response) => {
   const result = await SettingsService.updateSettings(req.body);
+  if (!result) {
+    sendResponse(res, {
+      statusCode: StatusCodes.NOT_FOUND,
+      success: false,
+      message: 'Settings not found',
+      data: null,
+    });
+    return;
+  }
+  const settingsObj = result.toObject ? result.toObject() : { ...result };
+
+  // Mask returned values since only admins can call this endpoint
+  if (settingsObj.pixels) {
+    settingsObj.pixels.fbCapiToken = settingsObj.pixels.fbCapiToken
+      ? '********'
+      : '';
+  }
+  if (settingsObj.mailchimp) {
+    settingsObj.mailchimp.apiKey = settingsObj.mailchimp.apiKey
+      ? '********'
+      : '';
+  }
+  settingsObj.webhookUrl = settingsObj.webhookUrl ? '********' : '';
+
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Settings updated successfully',
-    data: result,
+    data: settingsObj,
   });
 });
 

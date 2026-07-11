@@ -13,6 +13,17 @@ const updateSettings = async (payload: any) => {
   if (!settings) {
     settings = await SettingsModel.create(payload);
   } else {
+    // Retain existing database values if the payload sends masked placeholders ("********")
+    if (payload.pixels && payload.pixels.fbCapiToken === '********') {
+      payload.pixels.fbCapiToken = settings.pixels?.fbCapiToken;
+    }
+    if (payload.mailchimp && payload.mailchimp.apiKey === '********') {
+      payload.mailchimp.apiKey = settings.mailchimp?.apiKey;
+    }
+    if (payload.webhookUrl === '********') {
+      payload.webhookUrl = settings.webhookUrl;
+    }
+
     settings = await SettingsModel.findByIdAndUpdate(settings._id, payload, {
       new: true,
       runValidators: true,
