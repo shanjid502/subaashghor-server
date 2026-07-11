@@ -8,7 +8,7 @@ import logger from './logger';
  */
 export const syncToMailchimp = async (email: string): Promise<void> => {
   try {
-    const settings = await SettingsModel.findOne().lean();
+    const settings = await SettingsModel.findOne().lean({ getters: true });
     const s = settings as any;
     const apiKey: string | undefined = s?.mailchimp?.apiKey;
     const listId: string | undefined = s?.mailchimp?.listId;

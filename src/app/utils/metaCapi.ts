@@ -24,7 +24,7 @@ interface CAPIEventPayload {
  */
 export const sendMetaPurchaseEvent = async (data: CAPIEventPayload): Promise<void> => {
   try {
-    const settings = await SettingsModel.findOne().lean();
+    const settings = await SettingsModel.findOne().lean({ getters: true });
     const s = settings as any;
     const pixelId: string | undefined = s?.pixels?.fbPixel;
     const accessToken: string | undefined = s?.pixels?.fbCapiToken;

@@ -7,7 +7,7 @@ import logger from './logger';
  */
 export const dispatchWebhook = async (event: string, payload: Record<string, any>): Promise<void> => {
   try {
-    const settings = await SettingsModel.findOne().lean();
+    const settings = await SettingsModel.findOne().lean({ getters: true });
     const webhookUrl = (settings as any)?.webhookUrl as string | undefined;
 
     if (!webhookUrl || !webhookUrl.startsWith('http')) {

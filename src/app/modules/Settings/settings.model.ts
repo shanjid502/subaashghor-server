@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { ISettings } from './settings.interface';
+import { encrypt, decrypt } from '../../utils/encryption';
 
 const settingsSchema = new Schema<ISettings>(
   {
@@ -20,7 +21,7 @@ const settingsSchema = new Schema<ISettings>(
     pixels: {
       ga4: { type: String, default: '' },
       fbPixel: { type: String, default: '' },
-      fbCapiToken: { type: String, default: '' },
+      fbCapiToken: { type: String, default: '', get: decrypt, set: encrypt },
       gtm: { type: String, default: '' },
       tiktok: { type: String, default: '' },
       clarity: { type: String, default: '' },
@@ -38,12 +39,12 @@ const settingsSchema = new Schema<ISettings>(
 
     // --- 5.4 Mailchimp ---
     mailchimp: {
-      apiKey: { type: String, default: '' },
+      apiKey: { type: String, default: '', get: decrypt, set: encrypt },
       listId: { type: String, default: '' },
     },
 
     // --- 5.5 Webhooks ---
-    webhookUrl: { type: String, default: '' },
+    webhookUrl: { type: String, default: '', get: decrypt, set: encrypt },
     debugMode: { type: Boolean, default: false },
 
     // --- 5.6 Domain Verification ---
@@ -54,6 +55,8 @@ const settingsSchema = new Schema<ISettings>(
   },
   {
     timestamps: true,
+    toJSON: { getters: true },
+    toObject: { getters: true },
   }
 );
 
