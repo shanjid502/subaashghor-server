@@ -2,11 +2,9 @@ import crypto from 'crypto';
 import config from '../config';
 
 const ALGORITHM = 'aes-256-cbc';
-const ENCRYPTION_KEY =
-  process.env.ENCRYPTION_KEY ||
-  config.jwt_access_secret ||
-  'fallback_secret_32_characters_long_!!!';
-
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || config.jwt_access_secret;
+if (!ENCRYPTION_KEY)
+  throw new Error('FATAL: ENCRYPTION_KEY is not defined in .env');
 // Ensure the key is exactly 32 bytes
 const getKey = (): Buffer => {
   return crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
