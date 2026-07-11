@@ -8,8 +8,9 @@ import { ProductService } from '../Product/product.service';
 const getSettings = catchAsync(async (req: Request, res: Response) => {
   const result = await SettingsService.getSettings();
 
-  // Convert mongoose document to a plain JavaScript object
-  const settingsObj = result.toObject ? result.toObject() : { ...result };
+  // Convert mongoose document to a plain JavaScript object and prune metadata via destructuring
+  const rawObj = result.toObject ? result.toObject() : { ...result };
+  const { _id, id, __v, createdAt, updatedAt, ...settingsObj } = rawObj as any;
 
   const isAdmin = req.user && req.user.role?.toLowerCase() === 'admin';
 
@@ -27,12 +28,12 @@ const getSettings = catchAsync(async (req: Request, res: Response) => {
     settingsObj.webhookUrl = settingsObj.webhookUrl ? '********' : '';
   } else {
     if (settingsObj.pixels) {
-      delete settingsObj.pixels.fbCapiToken;
+      settingsObj.pixels.fbCapiToken = undefined;
     }
     if (settingsObj.mailchimp) {
-      delete settingsObj.mailchimp.apiKey;
+      settingsObj.mailchimp.apiKey = undefined;
     }
-    delete settingsObj.webhookUrl;
+    settingsObj.webhookUrl = undefined;
   }
 
   sendResponse(res, {
@@ -54,7 +55,8 @@ const updateSettings = catchAsync(async (req: Request, res: Response) => {
     });
     return;
   }
-  const settingsObj = result.toObject ? result.toObject() : { ...result };
+  const rawObj = result.toObject ? result.toObject() : { ...result };
+  const { _id, id, __v, createdAt, updatedAt, ...settingsObj } = rawObj as any;
 
   // Mask returned values since only admins can call this endpoint
   if (settingsObj.pixels) {
