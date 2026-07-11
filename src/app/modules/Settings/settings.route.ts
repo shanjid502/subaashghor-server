@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { SettingsController } from './settings.controller';
-import auth from '../../middlewares/auth.middleware';
+import auth, { optionalAuth } from '../../middlewares/auth.middleware';
 import { USER_ROLE } from '../Auth/auth.constant';
 import validateRequest from '../../utils/validateRequest';
 import { SettingsValidation } from './settings.validation';
@@ -8,7 +8,7 @@ import { SettingsModel } from './settings.model';
 
 const router = express.Router();
 
-router.get('/', SettingsController.getSettings);
+router.get('/', optionalAuth, SettingsController.getSettings);
 router.patch(
   '/',
   auth(USER_ROLE.admin),
@@ -27,7 +27,10 @@ router.get('/verify/domain', async (_req: Request, res: Response) => {
   res.type('text/html').send(token);
 });
 
-router.post('/clear-cache', auth(USER_ROLE.admin), SettingsController.clearCache);
+router.post(
+  '/clear-cache',
+  auth(USER_ROLE.admin),
+  SettingsController.clearCache,
+);
 
 export const SettingsRoutes = router;
-
