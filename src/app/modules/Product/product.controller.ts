@@ -4,6 +4,16 @@ import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { ProductService } from './product.service';
 
+/** Helper — safely extract the multer file map produced by upload.fields() */
+const extractFiles = (req: Request) => {
+  const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+  return {
+    featuredImageBuffer: files?.['featuredImage']?.[0]?.buffer ?? null,
+    galleryBuffers:      (files?.['galleryImages'] ?? []).map(f => f.buffer),
+    socialImageBuffer:  files?.['socialImage']?.[0]?.buffer ?? null,
+  };
+};
+
 const getAllProducts = catchAsync(async (req: Request, res: Response) => {
   const result = await ProductService.getAllProducts(req.query);
   sendResponse(res, {
@@ -36,7 +46,7 @@ const getProductBySlug = catchAsync(async (req: Request, res: Response) => {
 });
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {
-  const result = await ProductService.createProduct(req.body);
+  const result = await ProductService.createProduct(req.body, extractFiles(req));
   sendResponse(res, {
     statusCode: StatusCodes.CREATED,
     success: true,
@@ -46,7 +56,7 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
 });
 
 const updateProduct = catchAsync(async (req: Request, res: Response) => {
-  const result = await ProductService.updateProduct(req.params.id, req.body);
+  const result = await ProductService.updateProduct(req.params.id, req.body, extractFiles(req));
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,

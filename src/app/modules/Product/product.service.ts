@@ -3,6 +3,44 @@ import AppError from '../../errors/AppError';
 import { ProductModel } from './product.model';
 import { checkAndNotifyLowStock } from '../../utils/stockNotifier';
 import { pingSitemapToGoogle } from '../../utils/sitemapGenerator';
+import { uploadBuffer } from '../../utils/cloudinary';
+
+/** Shape returned by the controller helper */
+interface FileBuffers {
+  featuredImageBuffer: Buffer | null;
+  galleryBuffers: Buffer[];
+  socialImageBuffer: Buffer | null;
+}
+
+/**
+ * FormData sends everything as strings.
+ * This helper safely JSON-parses a field that was serialised on the client.
+ */
+const parseField = <T>(value: unknown, fallback: T): T => {
+  if (value === undefined || value === null || value === '') return fallback;
+  if (typeof value !== 'string') return value as T;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+/**
+ * Upload an array of Buffers to Cloudinary in parallel and return their URLs.
+ * If a buffer is null/undefined it is skipped.
+ */
+const uploadBuffers = async (
+  buffers: (Buffer | null)[],
+  folder: string,
+): Promise<string[]> => {
+  const results = await Promise.all(
+    buffers
+      .filter((b): b is Buffer => !!b)
+      .map(b => uploadBuffer(b, folder)),
+  );
+  return results.map(r => r.url);
+};
 
 const getAllProducts = async (query: Record<string, any>) => {
   const {
@@ -116,32 +154,155 @@ const getProductBySlug = async (slug: string) => {
   return product;
 };
 
-const createProduct = async (payload: any) => {
-  // If slug is not provided, generate from English name
-  if (!payload.slug && payload.name?.en) {
-    payload.slug = payload.name.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const createProduct = async (payload: any, files: FileBuffers) => {
+  // ── 1. Parse FormData fields that were JSON-serialised on the client ──────
+  const name        = parseField<{ en: string; bn: string }>(payload.name,        { en: '', bn: '' });
+  const tagline     = parseField<{ en: string; bn: string }>(payload.tagline,     { en: '', bn: '' });
+  const description = parseField<{ en: string; bn: string }>(payload.description, { en: '', bn: '' });
+  const sizes       = parseField<any[]>(payload.sizes,  []);
+  const notes       = parseField<any>(payload.notes,    { top: [], heart: [], base: [] });
+  const robotsMeta  = parseField<any>(payload.robotsMeta, { noindex: false, nofollow: false, noarchive: false });
+  const faqs        = parseField<any[]>(payload.faqs,  []);
+  const badges      = parseField<string[]>(payload.badges, []);
+
+  // ── 2. Basic field validation ─────────────────────────────────────────────
+  if (!name.en?.trim())       throw new AppError(StatusCodes.BAD_REQUEST, 'English name (name.en) is required');
+  if (!name.bn?.trim())       throw new AppError(StatusCodes.BAD_REQUEST, 'Bengali name (name.bn) is required');
+  if (!tagline.en?.trim())    throw new AppError(StatusCodes.BAD_REQUEST, 'English tagline is required');
+  if (!tagline.bn?.trim())    throw new AppError(StatusCodes.BAD_REQUEST, 'Bengali tagline is required');
+  if (!payload.category)      throw new AppError(StatusCodes.BAD_REQUEST, 'Category is required');
+  if (!['men','women','attar','unisex'].includes(payload.category))
+                              throw new AppError(StatusCodes.BAD_REQUEST, `Invalid category "${payload.category}". Must be men | women | attar | unisex`);
+  if (!sizes.length)          throw new AppError(StatusCodes.BAD_REQUEST, 'At least one size variant is required');
+  if (!files.featuredImageBuffer && !payload.existingFeaturedImage)
+                              throw new AppError(StatusCodes.BAD_REQUEST, 'A featured product image is required');
+
+  // ── 3. Upload images to Cloudinary ────────────────────────────────────────
+  let featuredImageUrl: string = payload.existingFeaturedImage || '';
+  if (files.featuredImageBuffer) {
+    const [url] = await uploadBuffers([files.featuredImageBuffer], 'subaashghor/products');
+    featuredImageUrl = url;
   }
 
-  const existingProduct = await ProductModel.findOne({ slug: payload.slug });
+  const galleryUrls = await uploadBuffers(files.galleryBuffers, 'subaashghor/products');
+
+  // Merge: keep any existing gallery URLs the client forwarded, add new ones
+  const existingGallery: string[] = parseField<string[]>(payload.existingGalleryImages, []);
+  const allGalleryUrls = [...existingGallery, ...galleryUrls];
+
+  let socialImageUrl: string = payload.socialImage || '';
+  if (files.socialImageBuffer) {
+    const [url] = await uploadBuffers([files.socialImageBuffer], 'subaashghor/products');
+    socialImageUrl = url;
+  }
+
+  // ── 4. Slug generation ────────────────────────────────────────────────────
+  let slug: string = payload.slug || '';
+  if (!slug && name.en) {
+    slug = name.en.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+  if (!slug) throw new AppError(StatusCodes.BAD_REQUEST, 'Could not generate a valid slug from the product name');
+
+  const existingProduct = await ProductModel.findOne({ slug });
   if (existingProduct) {
-    throw new AppError(StatusCodes.CONFLICT, 'Product with this slug already exists');
+    throw new AppError(StatusCodes.CONFLICT, `A product with slug "${slug}" already exists. Use a different English name or provide a custom slug.`);
   }
 
-  const result = await ProductModel.create(payload);
+  // ── 5. Build and persist the document ────────────────────────────────────
+  const doc = {
+    slug,
+    name,
+    tagline,
+    description,
+    category: payload.category,
+    price: Number(payload.price) || sizes[0]?.price || 0,
+    salePrice: payload.salePrice ? Number(payload.salePrice) : undefined,
+    images: [featuredImageUrl, ...allGalleryUrls],
+    sizes,
+    notes,
+    badges,
+    isActive: payload.isActive !== undefined ? payload.isActive !== 'false' && payload.isActive !== false : true,
+    lowStockThreshold: Number(payload.lowStockThreshold) || 5,
+    metaTitle:       parseField(payload.metaTitle,       { en: '', bn: '' }),
+    metaDescription: parseField(payload.metaDescription, { en: '', bn: '' }),
+    faqs,
+    metaKeywords: payload.metaKeywords || '',
+    canonicalUrl:  payload.canonicalUrl  || '',
+    socialImage:   socialImageUrl,
+    robotsMeta,
+  };
+
+  const result = await ProductModel.create(doc);
   await checkAndNotifyLowStock(result);
   setImmediate(() => pingSitemapToGoogle());
   return result;
 };
 
-const updateProduct = async (id: string, payload: any) => {
-  const result = await ProductModel.findByIdAndUpdate(id, payload, {
+const updateProduct = async (id: string, payload: any, files: FileBuffers) => {
+  // ── 1. Parse JSON-serialised FormData fields ──────────────────────────────
+  const name        = parseField<{ en: string; bn: string } | undefined>(payload.name, undefined);
+  const tagline     = parseField<{ en: string; bn: string } | undefined>(payload.tagline, undefined);
+  const description = parseField<{ en: string; bn: string } | undefined>(payload.description, undefined);
+  const sizes       = payload.sizes       ? parseField<any[]>(payload.sizes,  []) : undefined;
+  const notes       = payload.notes       ? parseField<any>(payload.notes,    undefined) : undefined;
+  const robotsMeta  = payload.robotsMeta  ? parseField<any>(payload.robotsMeta, undefined) : undefined;
+  const faqs        = payload.faqs        ? parseField<any[]>(payload.faqs,  []) : undefined;
+  const badges      = payload.badges      ? parseField<string[]>(payload.badges, []) : undefined;
+
+  // ── 2. Fetch the existing document so we can merge images ─────────────────
+  const existing = await ProductModel.findById(id);
+  if (!existing) throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
+
+  // ── 3. Resolve final image arrays ─────────────────────────────────────────
+  // existingFeaturedImage: client sends the current Cloudinary URL if unchanged
+  let featuredImageUrl: string =
+    payload.existingFeaturedImage ?? existing.images[0] ?? '';
+  if (files.featuredImageBuffer) {
+    const [url] = await uploadBuffers([files.featuredImageBuffer], 'subaashghor/products');
+    featuredImageUrl = url;
+  }
+
+  const newGalleryUrls = await uploadBuffers(files.galleryBuffers, 'subaashghor/products');
+  const existingGallery: string[] = parseField<string[]>(payload.existingGalleryImages, existing.images.slice(1));
+  const allGalleryUrls = [...existingGallery, ...newGalleryUrls];
+
+  let socialImageUrl: string = payload.socialImage ?? existing.socialImage ?? '';
+  if (files.socialImageBuffer) {
+    const [url] = await uploadBuffers([files.socialImageBuffer], 'subaashghor/products');
+    socialImageUrl = url;
+  }
+
+  // ── 4. Build the update patch ─────────────────────────────────────────────
+  const patch: Record<string, any> = {
+    images: [featuredImageUrl, ...allGalleryUrls],
+    socialImage: socialImageUrl,
+  };
+
+  if (name)        patch.name        = name;
+  if (tagline)     patch.tagline     = tagline;
+  if (description !== undefined) patch.description = description;
+  if (sizes)       patch.sizes       = sizes;
+  if (notes)       patch.notes       = notes;
+  if (robotsMeta)  patch.robotsMeta  = robotsMeta;
+  if (faqs)        patch.faqs        = faqs;
+  if (badges)      patch.badges      = badges;
+  if (payload.category)      patch.category      = payload.category;
+  if (payload.price !== undefined) patch.price    = Number(payload.price);
+  if (payload.isActive !== undefined)
+    patch.isActive = payload.isActive !== 'false' && payload.isActive !== false;
+  if (payload.lowStockThreshold !== undefined)
+    patch.lowStockThreshold = Number(payload.lowStockThreshold);
+  if (payload.metaTitle)       patch.metaTitle       = parseField(payload.metaTitle, undefined);
+  if (payload.metaDescription) patch.metaDescription = parseField(payload.metaDescription, undefined);
+  if (payload.metaKeywords !== undefined) patch.metaKeywords = payload.metaKeywords;
+  if (payload.canonicalUrl  !== undefined) patch.canonicalUrl  = payload.canonicalUrl;
+
+  const result = await ProductModel.findByIdAndUpdate(id, patch, {
     new: true,
     runValidators: true,
   });
 
-  if (!result) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
-  }
+  if (!result) throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
 
   await checkAndNotifyLowStock(result);
   setImmediate(() => pingSitemapToGoogle());
