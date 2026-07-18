@@ -22,6 +22,11 @@ const globalErrorHandler = (
     return next(err);
   }
 
+  // Always log in development so nothing is silently swallowed
+  if (config.NODE_ENV === 'development') {
+    console.error('[GlobalErrorHandler]', err);
+  }
+
   // ── Defaults ─────────────────────────────────────────────────────────────
   let statusCode = 500;
   let message = 'Something went wrong!';

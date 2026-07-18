@@ -20,16 +20,23 @@ export const uploadBuffer = (
       {
         folder,
         resource_type: 'image',
-        // 7.1 Auto-convert to WebP/AVIF — Cloudinary picks the best format per browser
-        format: 'auto',
         // Smart quality reduction without visible degradation
+        // Note: format is NOT set here — f_auto is injected via optimizeCloudinaryUrl()
+        // after upload, which rewrites the delivery URL for browser-optimal format.
         quality: 'auto:good',
         // Enforce a max width of 1600px to prevent massive originals being stored
         transformation: [{ width: 1600, crop: 'limit' }],
       },
       (error, result) => {
         if (error || !result) {
-          reject(error || new Error('Cloudinary upload failed'));
+          // Cloudinary returns a plain object, not an Error instance.
+          // Wrap it so the global error handler catches it correctly.
+          const msg =
+            (error as any)?.message ||
+            (error as any)?.error?.message ||
+            JSON.stringify(error) ||
+            'Cloudinary upload failed';
+          reject(new Error(`Cloudinary upload failed: ${msg}`));
         } else {
           resolve({
             // 7.1 Inject f_auto,q_auto into the delivery URL so CDN serves WebP/AVIF
