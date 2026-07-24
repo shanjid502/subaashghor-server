@@ -25,5 +25,6 @@ export default {
   super_admin_phone: process.env.SUPER_ADMIN_PHONE,
   super_admin_pass: process.env.SUPER_ADMIN_PASS,
   super_admin_name: process.env.SUPER_ADMIN_NAME,
-  discord_webhook_url: process.env.DISCORD_WEBHOOK_URL,
+  telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN,
+  telegram_chat_id: process.env.TELEGRAM_CHAT_ID,
 };

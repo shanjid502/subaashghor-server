@@ -6,7 +6,7 @@ import { CouponModel } from '../Coupon/coupon.model';
 import { dispatchWebhook } from '../../utils/webhookDispatcher';
 import { sendMetaPurchaseEvent } from '../../utils/metaCapi';
 import { generateEventId } from '../../utils/eventId';
-import { sendDiscordOrderNotification } from '../../utils/discordNotifier';
+import { sendTelegramOrderNotification } from '../../utils/telegramNotifier';
 
 const createOrder = async (userId: string | undefined, payload: any) => {
   const { items, shipping, paymentMethod, couponCode } = payload;
@@ -181,8 +181,8 @@ const createOrder = async (userId: string | undefined, payload: any) => {
       fbclid: (payload as any)._fbclid,
     });
 
-    // Discord Webhook Notification
-    await sendDiscordOrderNotification(order);
+    // Telegram Notification
+    await sendTelegramOrderNotification(order);
   });
 
   return order;
