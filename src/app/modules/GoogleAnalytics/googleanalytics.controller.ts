@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { GoogleAnalyticsService } from './googleAnalytics.service';
+import { GoogleAnalyticsService } from './googleanalytics.service';
 
 // ─── GA4 ──────────────────────────────────────────────────────────────────────
 

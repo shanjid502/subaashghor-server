@@ -13,7 +13,7 @@ import { SettingsRoutes } from '../modules/Settings/settings.route';
 import { ScentFinderRoutes } from '../modules/ScentFinder/scentfinder.route';
 import { RedirectRoutes } from '../modules/Redirect/redirect.route';
 import { ProductController } from '../modules/Product/product.controller';
-import { GoogleAnalyticsRoutes } from '../modules/GoogleAnalytics/googleAnalytics.route';
+import { GoogleAnalyticsRoutes } from '../modules/GoogleAnalytics/googleanalytics.route';
 import { generateSitemapXml } from '../utils/sitemapGenerator';
 import { SettingsModel } from '../modules/Settings/settings.model';
 // --- INJECT IMPORTS HERE ---

@@ -1,7 +1,7 @@
 import express from 'express';
 import auth from '../../middlewares/auth.middleware';
 import { USER_ROLE } from '../Auth/auth.constant';
-import { GoogleAnalyticsController } from './googleAnalytics.controller';
+import { GoogleAnalyticsController } from './googleanalytics.controller';
 
 const router = express.Router();
 
