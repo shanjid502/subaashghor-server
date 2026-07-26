@@ -656,7 +656,7 @@ Attar, on the other hand, uses pure carrier oils (like sandalwood oil or jojoba)
       instagram: 'https://instagram.com/subaashghor',
       maintenanceMode: false,
       pixels: {
-        ga4: 'G-XXXXXXX',
+        ga4: 'G-BRGFW0XQ4J',
         fbPixel: '1122334455',
         fbCapiToken: 'EAAXXYYZZ...',
         gtm: 'GTM-MNC82SG',
