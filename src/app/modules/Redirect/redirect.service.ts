@@ -34,6 +34,7 @@ const resolveRedirect = async (fromPath: string) => {
     { $inc: { hitCount: 1 } },
     { new: true }
   );
+  return redirect;
 };
 
 const logBrokenLink = async (url: string, referrer?: string) => {

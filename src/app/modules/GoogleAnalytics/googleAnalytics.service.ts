@@ -1,11 +1,11 @@
 import { google } from 'googleapis';
-import { GoogleAuth } from 'google-auth-library';
 import config from '../../config';
 import logger from '../../utils/logger';
 
 /**
  * Builds a GoogleAuth client using either a service account key file path
  * (GOOGLE_SERVICE_ACCOUNT_KEY_PATH) or inline JSON (GOOGLE_SERVICE_ACCOUNT_JSON).
+ * Uses the google-auth-library bundled inside googleapis to avoid type conflicts.
  */
 function getAuthClient(scopes: string[]) {
   const keyJson = config.google_service_account_json;
@@ -13,12 +13,14 @@ function getAuthClient(scopes: string[]) {
 
   if (keyJson) {
     const credentials = JSON.parse(keyJson);
-    return new GoogleAuth({ credentials, scopes });
+    return new google.auth.GoogleAuth({ credentials, scopes });
   }
   if (keyFile) {
-    return new GoogleAuth({ keyFile, scopes });
+    return new google.auth.GoogleAuth({ keyFile, scopes });
   }
-  throw new Error('No Google service account credentials configured. Set GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_SERVICE_ACCOUNT_KEY_PATH.');
+  throw new Error(
+    'No Google service account credentials configured. Set GOOGLE_SERVICE_ACCOUNT_JSON or GOOGLE_SERVICE_ACCOUNT_KEY_PATH.',
+  );
 }
 
 // ─── GA4 Data API ─────────────────────────────────────────────────────────────
@@ -49,7 +51,7 @@ const getGA4Overview = async (dateRange: '7d' | '28d' | '90d' = '28d'): Promise<
   const auth = getAuthClient(['https://www.googleapis.com/auth/analytics.readonly']);
   const analyticsData = google.analyticsdata({ version: 'v1beta', auth });
 
-  const daysMap = { '7d': '7daysAgo', '28d': '28daysAgo', '90d': '90daysAgo' };
+  const daysMap: Record<string, string> = { '7d': '7daysAgo', '28d': '28daysAgo', '90d': '90daysAgo' };
 
   const res = await analyticsData.properties.runReport({
     property: `properties/${propertyId}`,
@@ -95,11 +97,11 @@ const getGA4TopPages = async (limit = 10): Promise<GA4TopPage[]> => {
       dimensions: [{ name: 'pagePath' }],
       metrics: [{ name: 'sessions' }, { name: 'screenPageViews' }],
       orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
-      limit,
     },
   });
 
-  return (res.data.rows ?? []).map((row) => ({
+  const rows = res.data.rows ?? [];
+  return rows.slice(0, limit).map((row: any) => ({
     pagePath: row.dimensionValues?.[0]?.value ?? '',
     sessions: parseInt(row.metricValues?.[0]?.value ?? '0'),
     pageViews: parseInt(row.metricValues?.[1]?.value ?? '0'),
@@ -132,14 +134,13 @@ export interface GSCTopPage {
   position: number;
 }
 
-export interface GSCIndexStatus {
-  url: string;
-  verdict: string;     // PASS | NEUTRAL | FAIL
-  coverageState: string;
-  robotsTxtState: string;
-  indexingState: string;
-  crawledAs?: string;
-  lastCrawlTime?: string;
+const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+function getDateRange(days: number): { startDate: string; endDate: string } {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  return { startDate: fmt(start), endDate: fmt(end) };
 }
 
 /**
@@ -152,30 +153,21 @@ const getGSCOverview = async (dateRange: '7d' | '28d' | '90d' = '28d'): Promise<
   const auth = getAuthClient(['https://www.googleapis.com/auth/webmasters.readonly']);
   const webmasters = google.webmasters({ version: 'v3', auth });
 
-  const daysMap = { '7d': 7, '28d': 28, '90d': 90 };
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - daysMap[dateRange]);
-
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const daysMap: Record<string, number> = { '7d': 7, '28d': 28, '90d': 90 };
+  const { startDate, endDate } = getDateRange(daysMap[dateRange]);
 
   const res = await webmasters.searchanalytics.query({
     siteUrl,
-    requestBody: {
-      startDate: fmt(startDate),
-      endDate: fmt(endDate),
-      rowLimit: 1,
-    },
+    requestBody: { startDate, endDate, rowLimit: 25000 },
   });
 
-  const totals = res.data;
-  return {
-    totalClicks: totals.rows?.reduce((s, r) => s + (r.clicks ?? 0), 0) ?? 0,
-    totalImpressions: totals.rows?.reduce((s, r) => s + (r.impressions ?? 0), 0) ?? 0,
-    avgCTR: totals.rows?.[0]?.ctr ?? 0,
-    avgPosition: totals.rows?.[0]?.position ?? 0,
-    dateRange,
-  };
+  const rows = res.data.rows ?? [];
+  const totalClicks = rows.reduce((s, r) => s + (r.clicks ?? 0), 0);
+  const totalImpressions = rows.reduce((s, r) => s + (r.impressions ?? 0), 0);
+  const avgCTR = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
+  const avgPosition = rows.length > 0 ? rows.reduce((s, r) => s + (r.position ?? 0), 0) / rows.length : 0;
+
+  return { totalClicks, totalImpressions, avgCTR, avgPosition, dateRange };
 };
 
 /**
@@ -188,29 +180,27 @@ const getGSCTopQueries = async (limit = 10): Promise<GSCTopQuery[]> => {
   const auth = getAuthClient(['https://www.googleapis.com/auth/webmasters.readonly']);
   const webmasters = google.webmasters({ version: 'v3', auth });
 
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 28);
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const { startDate, endDate } = getDateRange(28);
 
   const res = await webmasters.searchanalytics.query({
     siteUrl,
     requestBody: {
-      startDate: fmt(startDate),
-      endDate: fmt(endDate),
+      startDate,
+      endDate,
       dimensions: ['query'],
       rowLimit: limit,
-      orderBy: [{ field: 'clicks', sortOrder: 'DESCENDING' }] as any,
     },
   });
 
-  return (res.data.rows ?? []).map((row) => ({
-    query: row.keys?.[0] ?? '',
-    clicks: row.clicks ?? 0,
-    impressions: row.impressions ?? 0,
-    ctr: row.ctr ?? 0,
-    position: row.position ?? 0,
-  }));
+  return (res.data.rows ?? [])
+    .sort((a, b) => (b.clicks ?? 0) - (a.clicks ?? 0))
+    .map((row) => ({
+      query: row.keys?.[0] ?? '',
+      clicks: row.clicks ?? 0,
+      impressions: row.impressions ?? 0,
+      ctr: row.ctr ?? 0,
+      position: row.position ?? 0,
+    }));
 };
 
 /**
@@ -223,39 +213,38 @@ const getGSCTopPages = async (limit = 10): Promise<GSCTopPage[]> => {
   const auth = getAuthClient(['https://www.googleapis.com/auth/webmasters.readonly']);
   const webmasters = google.webmasters({ version: 'v3', auth });
 
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 28);
-  const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const { startDate, endDate } = getDateRange(28);
 
   const res = await webmasters.searchanalytics.query({
     siteUrl,
     requestBody: {
-      startDate: fmt(startDate),
-      endDate: fmt(endDate),
+      startDate,
+      endDate,
       dimensions: ['page'],
       rowLimit: limit,
-      orderBy: [{ field: 'clicks', sortOrder: 'DESCENDING' }] as any,
     },
   });
 
-  return (res.data.rows ?? []).map((row) => ({
-    page: row.keys?.[0] ?? '',
-    clicks: row.clicks ?? 0,
-    impressions: row.impressions ?? 0,
-    ctr: row.ctr ?? 0,
-    position: row.position ?? 0,
-  }));
+  return (res.data.rows ?? [])
+    .sort((a, b) => (b.clicks ?? 0) - (a.clicks ?? 0))
+    .map((row) => ({
+      page: row.keys?.[0] ?? '',
+      clicks: row.clicks ?? 0,
+      impressions: row.impressions ?? 0,
+      ctr: row.ctr ?? 0,
+      position: row.position ?? 0,
+    }));
 };
 
 // ─── Google Indexing API ───────────────────────────────────────────────────────
 
 /**
  * Requests instant indexing of a URL via the Google Indexing API.
- * Only works for pages with structured data (JobPosting / BroadcastEvent).
- * For general pages, use the Search Console URL Inspection + sitemap ping flow.
+ * For general pages, pair with sitemap ping for best results.
  */
-const requestInstantIndex = async (url: string): Promise<{ notified: boolean; urlNotificationMetadata?: object }> => {
+const requestInstantIndex = async (
+  url: string,
+): Promise<{ notified: boolean; urlNotificationMetadata?: object }> => {
   try {
     const auth = getAuthClient(['https://www.googleapis.com/auth/indexing']);
     const indexing = google.indexing({ version: 'v3', auth });
@@ -265,7 +254,7 @@ const requestInstantIndex = async (url: string): Promise<{ notified: boolean; ur
     });
 
     logger.info(`Google Indexing API: notified for ${url}`);
-    return { notified: true, urlNotificationMetadata: res.data };
+    return { notified: true, urlNotificationMetadata: res.data as object };
   } catch (err: any) {
     logger.warn(`Google Indexing API failed for ${url}: ${err?.message}`);
     return { notified: false };
