@@ -7,3 +7,13 @@ export interface IRedirect {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface IBrokenLink {
+  url: string;
+  referrer?: string;
+  hitCount: number;
+  lastHitAt: Date;
+  resolved: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

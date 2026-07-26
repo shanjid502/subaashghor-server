@@ -29,3 +29,22 @@ const redirectSchema = new Schema<IRedirect>(
 );
 
 export const RedirectModel = model<IRedirect>('Redirect', redirectSchema);
+
+const brokenLinkSchema = new Schema<any>(
+  {
+    url: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+      trim: true,
+    },
+    referrer: { type: String },
+    hitCount: { type: Number, default: 1 },
+    lastHitAt: { type: Date, default: Date.now },
+    resolved: { type: Boolean, default: false, index: true },
+  },
+  { timestamps: true }
+);
+
+export const BrokenLinkModel = model<any>('BrokenLink', brokenLinkSchema);

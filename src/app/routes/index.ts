@@ -13,6 +13,7 @@ import { SettingsRoutes } from '../modules/Settings/settings.route';
 import { ScentFinderRoutes } from '../modules/ScentFinder/scentfinder.route';
 import { RedirectRoutes } from '../modules/Redirect/redirect.route';
 import { ProductController } from '../modules/Product/product.controller';
+import { GoogleAnalyticsRoutes } from '../modules/GoogleAnalytics/googleAnalytics.route';
 import { generateSitemapXml } from '../utils/sitemapGenerator';
 import { SettingsModel } from '../modules/Settings/settings.model';
 // --- INJECT IMPORTS HERE ---
@@ -36,6 +37,7 @@ const moduleRoutes = [
   { path: '/scent-finder/questions', route: ScentFinderRoutes },
   { path: '/fb-product-feed', route: fbFeedRouter },
   { path: '/redirects', route: RedirectRoutes },
+  { path: '/analytics', route: GoogleAnalyticsRoutes },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

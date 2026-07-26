@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import AppError from '../../errors/AppError';
-import { RedirectModel } from './redirect.model';
+import { RedirectModel, BrokenLinkModel } from './redirect.model';
 
 const getAllRedirects = async () => {
   return RedirectModel.find().sort({ createdAt: -1 });
@@ -34,7 +34,28 @@ const resolveRedirect = async (fromPath: string) => {
     { $inc: { hitCount: 1 } },
     { new: true }
   );
-  return redirect;
+};
+
+const logBrokenLink = async (url: string, referrer?: string) => {
+  const normalizedUrl = url.startsWith('/') ? url : `/${url}`;
+  const existing = await BrokenLinkModel.findOne({ url: normalizedUrl });
+  if (existing) {
+    existing.hitCount += 1;
+    existing.lastHitAt = new Date();
+    if (referrer && !existing.referrer) {
+      existing.referrer = referrer;
+    }
+    return existing.save();
+  }
+  return BrokenLinkModel.create({ url: normalizedUrl, referrer });
+};
+
+const getBrokenLinks = async () => {
+  return BrokenLinkModel.find({ resolved: false }).sort({ lastHitAt: -1 });
+};
+
+const resolveBrokenLink = async (id: string) => {
+  return BrokenLinkModel.findByIdAndUpdate(id, { resolved: true }, { new: true });
 };
 
 export const RedirectService = {
@@ -43,4 +64,7 @@ export const RedirectService = {
   updateRedirect,
   deleteRedirect,
   resolveRedirect,
+  logBrokenLink,
+  getBrokenLinks,
+  resolveBrokenLink,
 };

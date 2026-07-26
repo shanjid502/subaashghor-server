@@ -27,4 +27,9 @@ export default {
   super_admin_name: process.env.SUPER_ADMIN_NAME,
   telegram_bot_token: process.env.TELEGRAM_BOT_TOKEN,
   telegram_chat_id: process.env.TELEGRAM_CHAT_ID,
+  // --- Google APIs (Module 10.3) ---
+  ga4_property_id: process.env.GA4_PROPERTY_ID,
+  gsc_site_url: process.env.GSC_SITE_URL,
+  google_service_account_json: process.env.GOOGLE_SERVICE_ACCOUNT_JSON,
+  google_service_account_key_path: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH,
 };
