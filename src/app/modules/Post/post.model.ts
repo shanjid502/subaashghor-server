@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
 
 export interface IPost {
   _id?: string;
@@ -8,6 +8,7 @@ export interface IPost {
   content?: { bn: string; en: string };
   category: { bn: string; en: string };
   cover: string;
+  coverAlt?: string;
   tags?: string[];
   author?: {
     name: string;
@@ -17,6 +18,9 @@ export interface IPost {
   readMinutes?: number;
   featured?: boolean;
   published?: boolean;
+
+  // --- Module 09: Contextual Selling ---
+  relatedProducts?: Types.ObjectId[];
 
   // --- Module 08: AEO/SEO Readiness ---
   metaTitle?: { bn: string; en: string };
@@ -55,6 +59,7 @@ const postSchema = new Schema<IPost>(
       en: { type: String, required: true },
     },
     cover: { type: String, required: true },
+    coverAlt: { type: String, default: '' },
     tags: [{ type: String, lowercase: true }],
     author: {
       name: String,
@@ -64,6 +69,9 @@ const postSchema = new Schema<IPost>(
     readMinutes: Number,
     featured: { type: Boolean, default: false, index: true },
     published: { type: Boolean, default: true, index: true },
+
+    // --- Module 09: Contextual Selling ---
+    relatedProducts: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
 
     // --- Module 08: AEO/SEO Readiness ---
     metaTitle: {

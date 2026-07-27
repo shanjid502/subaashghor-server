@@ -10,6 +10,8 @@ const getAllPosts = async (query: Record<string, any>) => {
 
   if (isAdmin !== 'true') {
     filterObj.published = true;
+    // Module 09: Scheduled Publishing — hide future-dated posts from public
+    filterObj.date = { $lte: new Date() };
   }
 
   if (featured !== undefined) {
@@ -29,7 +31,8 @@ const getAllPosts = async (query: Record<string, any>) => {
   const posts = await PostModel.find(filterObj)
     .sort({ date: -1 })
     .skip(skip)
-    .limit(Number(limit));
+    .limit(Number(limit))
+    .populate('relatedProducts', 'title slug cover variants');
 
   const total = await PostModel.countDocuments(filterObj);
 
@@ -45,7 +48,8 @@ const getAllPosts = async (query: Record<string, any>) => {
 };
 
 const getPostBySlug = async (slug: string) => {
-  const post = await PostModel.findOne({ slug });
+  const post = await PostModel.findOne({ slug })
+    .populate('relatedProducts', 'title slug cover variants');
   if (!post) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Post not found');
   }
