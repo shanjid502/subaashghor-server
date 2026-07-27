@@ -23,6 +23,7 @@ router.get(
 // Admin / Management endpoints
 router.get('/', auth(USER_ROLE.admin), OrderController.getAllOrders);
 router.patch('/:id/status', auth(USER_ROLE.admin), OrderController.updateOrderStatus);
+router.delete('/:id', auth(USER_ROLE.admin), OrderController.deleteOrder);
 
 router.get(
   '/:idOrNumber',

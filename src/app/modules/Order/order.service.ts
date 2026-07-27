@@ -252,10 +252,28 @@ const updateOrderStatus = async (id: string, status: string) => {
   return order;
 };
 
+const deleteOrder = async (id: string) => {
+  const order = await OrderModel.findById(id);
+  if (!order) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Order not found');
+  }
+
+  if (order.status !== 'cancelled') {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Only cancelled orders can be deleted to maintain database integrity',
+    );
+  }
+
+  const result = await OrderModel.findByIdAndDelete(id);
+  return result;
+};
+
 export const OrderService = {
   createOrder,
   getMyOrders,
   getOrderByIdOrNumber,
   getAllOrders,
   updateOrderStatus,
+  deleteOrder,
 };
