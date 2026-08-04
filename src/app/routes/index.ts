@@ -7,7 +7,7 @@ import { PostRoutes } from '../modules/Post/post.route';
 import { ReviewRoutes } from '../modules/Review/review.route';
 import { CouponRoutes } from '../modules/Coupon/coupon.route';
 import { OrderRoutes } from '../modules/Order/order.route';
-import { NewslatterRoutes } from '../modules/Newslatter/newslatter.route';
+import { NewsletterRoutes } from '../modules/Newsletter/newsletter.route';
 import { UploadRoutes } from '../modules/Upload/upload.route';
 import { SettingsRoutes } from '../modules/Settings/settings.route';
 import { ScentFinderRoutes } from '../modules/ScentFinder/scentfinder.route';
@@ -31,7 +31,8 @@ const moduleRoutes = [
   { path: '/reviews', route: ReviewRoutes },
   { path: '/coupons', route: CouponRoutes },
   { path: '/orders', route: OrderRoutes },
-  { path: '/newsletter', route: NewslatterRoutes },
+  { path: '/newsletter', route: NewsletterRoutes },
+  { path: '/newslatter', route: NewsletterRoutes }, // Legacy backward-compatibility alias
   { path: '/uploads', route: UploadRoutes },
   { path: '/settings', route: SettingsRoutes },
   { path: '/scent-finder/questions', route: ScentFinderRoutes },

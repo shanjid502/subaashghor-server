@@ -2,10 +2,10 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { catchAsync } from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { NewslatterService } from './newslatter.service';
+import { NewsletterService } from './newsletter.service';
 
 const subscribe = catchAsync(async (req: Request, res: Response) => {
-  const result = await NewslatterService.subscribe(req.body.email);
+  const result = await NewsletterService.subscribe(req.body.email);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -14,6 +14,6 @@ const subscribe = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const NewslatterController = {
+export const NewsletterController = {
   subscribe,
 };
