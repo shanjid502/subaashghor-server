@@ -7,6 +7,7 @@ import { UserModel, OtpTokenModel } from './auth.model';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import { runInTransaction } from '../../utils/transaction';
+import logger from '../../utils/logger';
 
 const signupUser = async (payload: TSignupUser) => {
   // Check unique phone number
@@ -116,7 +117,7 @@ const forgotPassword = async (payload: { email?: string; phone?: string }) => {
     });
 
     if (config.NODE_ENV === 'development') {
-      console.log(`📱 SENT SMS OTP to ${payload.phone} for password reset: Code is ${code}`);
+      logger.info(`📱 SENT SMS OTP to ${payload.phone} for password reset`);
     }
     return { sent: true, via: 'phone' };
   } else if (payload.email) {
@@ -132,7 +133,7 @@ const forgotPassword = async (payload: { email?: string; phone?: string }) => {
     );
 
     if (config.NODE_ENV === 'development') {
-      console.log(`🔑 PASSWORD RESET LINK: http://localhost:5173/reset-password?token=${resetToken}`);
+      logger.info(`🔑 GENERATED PASSWORD RESET LINK for ${payload.email}`);
     }
     return { sent: true, via: 'email' };
   }
@@ -218,7 +219,7 @@ const requestOtp = async (phone: string, purpose: 'login' | 'signup' | 'verify' 
   });
 
   if (config.NODE_ENV === 'development') {
-    console.log(`📱 SENT SMS OTP to ${phone} for ${purpose}: Code is ${code}`);
+    logger.info(`📱 SENT SMS OTP to ${phone} for ${purpose}`);
   }
 
   return {

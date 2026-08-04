@@ -20,7 +20,7 @@ async function bootstrap() {
     console.log('✅ MongoDB connected');
 
     try {
-      await ReviewModel.cleanIndexes();
+      await ReviewModel.syncIndexes();
       console.log('✅ Review indexes cleaned & synchronized');
     } catch (indexError) {
       console.error('⚠️ Failed to sync Review indexes:', indexError);

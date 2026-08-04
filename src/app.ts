@@ -28,16 +28,14 @@ app.use(
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (process.env.NODE_ENV !== 'production' || !origin) {
-        callback(null, true);
-      } else {
-        const allowedOrigins = config.cors_origin ? config.cors_origin.split(',') : [];
-        if (allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
       }
+      const allowedOrigins = config.cors_origin ? config.cors_origin.split(',').map((s) => s.trim()) : [];
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
   }),

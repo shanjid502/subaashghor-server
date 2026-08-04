@@ -7,18 +7,25 @@ import { dispatchWebhook } from '../../utils/webhookDispatcher';
 import { sendMetaPurchaseEvent } from '../../utils/metaCapi';
 import { generateEventId } from '../../utils/eventId';
 import { sendTelegramOrderNotification } from '../../utils/telegramNotifier';
+import { ICreateOrderPayload } from './order.interface';
+import { runInTransaction } from '../../utils/transaction';
+import QueryBuilder from '../../utils/QueryBuilder';
 
-const createOrder = async (userId: string | undefined, payload: any) => {
+const createOrder = async (userId: string | undefined, payload: ICreateOrderPayload) => {
   const { items, shipping, paymentMethod, couponCode } = payload;
 
-  let subtotal = 0;
-  const processedItems = [];
-  const decrementedItems: { productId: string; ml: number; qty: number }[] = [];
+  if (!items || !items.length) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Order items are required');
+  }
 
-  try {
+  // Wrap stock decrement and order creation inside a managed transaction
+  const order = await runInTransaction(async (session) => {
+    let subtotal = 0;
+    const processedItems = [];
+
     // 1. Verify products, recompute price, and update stock atomically
     for (const item of items) {
-      const product = await ProductModel.findById(item.productId);
+      const product = await ProductModel.findById(item.productId).session(session);
       if (!product) {
         throw new AppError(StatusCodes.NOT_FOUND, `Product not found: ${item.productId}`);
       }
@@ -41,7 +48,7 @@ const createOrder = async (userId: string | undefined, payload: any) => {
         {
           $inc: { 'sizes.$.stock': -item.qty },
         },
-        { new: true },
+        { new: true, session },
       );
 
       if (!updatedProduct) {
@@ -51,113 +58,116 @@ const createOrder = async (userId: string | undefined, payload: any) => {
         );
       }
 
-      // Track successful decrement for possible rollback
-      decrementedItems.push({
-        productId: item.productId,
-        ml: Number(item.ml),
-        qty: item.qty,
-      });
-
       // Use verified database price (supporting salePrice if present and greater than 0)
-      const unitPrice = (sizeObj.salePrice !== undefined && sizeObj.salePrice > 0) ? sizeObj.salePrice : sizeObj.price;
+      const unitPrice =
+        sizeObj.salePrice !== undefined && sizeObj.salePrice > 0 ? sizeObj.salePrice : sizeObj.price;
       const itemSubtotal = unitPrice * item.qty;
       subtotal += itemSubtotal;
 
       processedItems.push({
         productId: product._id,
         slug: product.slug,
-        name: product.name.en, // localise at order-time
+        name: product.name.en,
         image: product.images[0],
         ml: Number(item.ml),
         price: unitPrice,
         qty: item.qty,
       });
     }
-  } catch (error) {
-    // Rollback any stock that was already decremented during this attempt
-    for (const roll of decrementedItems) {
-      await ProductModel.findOneAndUpdate(
-        {
-          _id: roll.productId,
-          'sizes.ml': roll.ml,
-        },
-        {
-          $inc: { 'sizes.$.stock': roll.qty },
-        },
-      );
-    }
-    throw error;
-  }
 
-  // 2. Shipping fee logic (free shipping for order >= 3000 BDT, else 130 BDT)
-  const shippingFee = subtotal >= 3000 ? 0 : 130;
+    // 2. Coupon validation & discount logic
+    let discount = 0;
+    if (couponCode) {
+      const coupon = await CouponModel.findOne({
+        code: couponCode.trim().toUpperCase(),
+        active: true,
+      }).session(session);
 
-  // 3. Coupon validation & discount logic
-  let discount = 0;
-  if (couponCode) {
-    const coupon = await CouponModel.findOne({
-      code: couponCode.trim().toUpperCase(),
-      active: true,
-    });
+      if (coupon) {
+        const isNotExpired = !coupon.expiresAt || new Date() <= coupon.expiresAt;
+        const isSubtotalValid = !coupon.minSubtotal || subtotal >= coupon.minSubtotal;
 
-    if (coupon) {
-      const isNotExpired = !coupon.expiresAt || new Date() <= coupon.expiresAt;
-      const isSubtotalValid = !coupon.minSubtotal || subtotal >= coupon.minSubtotal;
-
-      if (isNotExpired && isSubtotalValid) {
-        if (coupon.type === 'flat') {
-          discount = coupon.value;
-        } else if (coupon.type === 'percent') {
-          discount = Math.round((subtotal * coupon.value) / 100);
-          if (coupon.maxDiscount) {
-            discount = Math.min(discount, coupon.maxDiscount);
+        if (isNotExpired && isSubtotalValid) {
+          if (coupon.type === 'flat') {
+            discount = coupon.value;
+          } else if (coupon.type === 'percent') {
+            discount = Math.round((subtotal * coupon.value) / 100);
+            if (coupon.maxDiscount) {
+              discount = Math.min(discount, coupon.maxDiscount);
+            }
           }
         }
       }
     }
-  }
 
-  // Ensure total does not fall below zero
-  const total = Math.max(0, subtotal + shippingFee - discount);
+    // 3. Shipping fee logic (Inside Dhaka: 70 BDT, Outside Dhaka: 130 BDT; Free shipping if subtotal - discount >= 3000 BDT)
+    const isInsideDhaka =
+      shipping.district?.trim().toLowerCase() === 'dhaka' ||
+      shipping.area?.trim().toLowerCase().includes('inside dhaka');
+    const shippingBase = isInsideDhaka ? 70 : 130;
+    const netSubtotal = subtotal - discount;
+    const shippingFee = netSubtotal >= 3000 ? 0 : shippingBase;
 
-  // 4. Generate order number (e.g. SG-482910) with uniqueness guarantee
-  let orderNumber = '';
-  let isUnique = false;
-  while (!isUnique) {
-    const randomSixDigits = Math.floor(100000 + Math.random() * 900000);
-    orderNumber = `SG-${randomSixDigits}`;
-    const existingOrder = await OrderModel.findOne({ orderNumber });
-    if (!existingOrder) {
-      isUnique = true;
+    // Ensure total does not fall below zero
+    const total = Math.max(0, netSubtotal + shippingFee);
+
+    // 4. Generate unique order number with retry guarantee against collisions
+    let createdOrder = null;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    while (!createdOrder && attempts < maxAttempts) {
+      attempts++;
+      const randomSixDigits = Math.floor(100000 + Math.random() * 900000);
+      const orderNumber = `SG-${randomSixDigits}`;
+
+      const existingOrder = await OrderModel.findOne({ orderNumber }).session(session);
+      if (existingOrder) continue;
+
+      const orderData: Record<string, any> = {
+        orderNumber,
+        items: processedItems,
+        shipping,
+        subtotal,
+        shippingFee,
+        discount,
+        total,
+        paymentMethod,
+        paymentStatus: 'pending',
+        status: 'pending',
+        couponCode,
+      };
+
+      if (userId) {
+        orderData.userId = userId;
+      }
+
+      try {
+        const result = await OrderModel.create([orderData], { session });
+        createdOrder = result[0];
+      } catch (err: any) {
+        if (err.code === 11000 && attempts < maxAttempts) {
+          continue; // Retry on duplicate orderNumber collision
+        }
+        throw err;
+      }
     }
-  }
 
-  const orderData: any = {
-    orderNumber,
-    items: processedItems,
-    shipping,
-    subtotal,
-    shippingFee,
-    discount,
-    total,
-    paymentMethod,
-    paymentStatus: 'pending',
-    status: 'pending',
-    couponCode,
-  };
+    if (!createdOrder) {
+      throw new AppError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Failed to generate unique order number after multiple attempts',
+      );
+    }
 
-  if (userId) {
-    orderData.userId = userId;
-  }
-
-  const order = await OrderModel.create(orderData);
+    return createdOrder;
+  });
 
   // --- Fire async side-effects (never block order response) ---
   setImmediate(async () => {
     const orderId = String(order._id);
     const eventId = generateEventId();
 
-    // 5.5 Webhook: notify Zapier / Make.com
     await dispatchWebhook('order.created', {
       eventId,
       orderId,
@@ -169,19 +179,17 @@ const createOrder = async (userId: string | undefined, payload: any) => {
       items: order.items,
     });
 
-    // 5.3 Meta CAPI: server-side Purchase event
     await sendMetaPurchaseEvent({
       orderId,
       total: order.total,
       currency: 'BDT',
-      email: (payload as any).email,
+      email: payload.email,
       phone: order.shipping?.phone,
-      ipAddress: (payload as any)._ipAddress,
-      userAgent: (payload as any)._userAgent,
-      fbclid: (payload as any)._fbclid,
+      ipAddress: payload._ipAddress,
+      userAgent: payload._userAgent,
+      fbclid: payload._fbclid,
     });
 
-    // Telegram Notification
     await sendTelegramOrderNotification(order);
   });
 
@@ -206,12 +214,10 @@ const getOrderByIdOrNumber = async (
     throw new AppError(StatusCodes.NOT_FOUND, 'Order not found');
   }
 
-  // Admins can see everything
   if (userPayload?.role === 'admin') {
     return order;
   }
 
-  // If order is bound to a registered user
   if (order.userId) {
     if (!userPayload || String(order.userId) !== userPayload.userId) {
       throw new AppError(StatusCodes.FORBIDDEN, 'Unauthorized access to this order');
@@ -219,7 +225,6 @@ const getOrderByIdOrNumber = async (
     return order;
   }
 
-  // If guest order, verify phone number matches shipping phone to prevent brute forcing
   const cleanShippingPhone = order.shipping.phone.replace(/[^0-9]/g, '');
   const cleanQueryPhone = phoneQuery ? phoneQuery.replace(/[^0-9]/g, '') : '';
 
@@ -233,9 +238,32 @@ const getOrderByIdOrNumber = async (
   return order;
 };
 
-const getAllOrders = async () => {
-  const orders = await OrderModel.find().sort({ createdAt: -1 });
-  return orders;
+const getAllOrders = async (query: Record<string, unknown> = {}) => {
+  const searchableFields = [
+    'orderNumber',
+    'shipping.name',
+    'shipping.phone',
+    'shipping.email',
+    'shipping.city',
+    'shipping.district',
+    'paymentMethod',
+    'status',
+  ];
+
+  const orderQuery = new QueryBuilder(OrderModel.find(), query)
+    .search(searchableFields)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const orders = await orderQuery.modelQuery;
+  const meta = await orderQuery.countTotal();
+
+  return {
+    orders,
+    meta,
+  };
 };
 
 const updateOrderStatus = async (id: string, status: string) => {

@@ -118,11 +118,7 @@ userSchema.pre('save', async function () {
   if (!this.isModified('passwordHash') || !this.passwordHash) {
     return;
   }
-  try {
-    this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
-  } catch (error) {
-    throw error;
-  }
+  this.passwordHash = await bcrypt.hash(this.passwordHash, 10);
 });
 
 userSchema.methods.comparePassword = async function (

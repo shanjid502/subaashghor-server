@@ -41,13 +41,14 @@ const getOrderByIdOrNumber = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllOrders = catchAsync(async (_req: Request, res: Response) => {
-  const result = await OrderService.getAllOrders();
+const getAllOrders = catchAsync(async (req: Request, res: Response) => {
+  const result = await OrderService.getAllOrders(req.query);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'All orders fetched successfully',
-    data: result,
+    data: result.orders,
+    meta: result.meta,
   });
 });
 
