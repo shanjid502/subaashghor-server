@@ -2,6 +2,7 @@ export interface ISize {
   ml: number;
   price: number;
   salePrice?: number;
+  costPrice?: number;
   stock: number;
   sku?: string;
 }
@@ -20,6 +21,7 @@ export interface IProduct {
   images: string[];
   price: number;
   salePrice?: number;
+  costPrice?: number;
   saleEndsAt?: Date;
   badge?: { bn: string; en: string };
   badges?: string[];

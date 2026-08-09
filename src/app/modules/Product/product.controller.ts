@@ -25,8 +25,9 @@ const getAllProducts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getFeaturedProducts = catchAsync(async (_req: Request, res: Response) => {
-  const result = await ProductService.getFeaturedProducts();
+const getFeaturedProducts = catchAsync(async (req: Request, res: Response) => {
+  const isAdmin = req.query.isAdmin === 'true' || (req as any).user?.role === 'admin';
+  const result = await ProductService.getFeaturedProducts(isAdmin);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
@@ -36,7 +37,8 @@ const getFeaturedProducts = catchAsync(async (_req: Request, res: Response) => {
 });
 
 const getProductBySlug = catchAsync(async (req: Request, res: Response) => {
-  const result = await ProductService.getProductBySlug(req.params.slug);
+  const isAdmin = req.query.isAdmin === 'true' || (req as any).user?.role === 'admin';
+  const result = await ProductService.getProductBySlug(req.params.slug, isAdmin);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,

@@ -42,6 +42,20 @@ const uploadBuffers = async (
   return results.map(r => r.url);
 };
 
+const sanitizeProductForPublic = (product: any) => {
+  if (!product) return product;
+  const obj = typeof product.toObject === 'function' ? product.toObject() : { ...product };
+  delete obj.costPrice;
+  if (Array.isArray(obj.sizes)) {
+    obj.sizes = obj.sizes.map((size: any) => {
+      const s = { ...size };
+      delete s.costPrice;
+      return s;
+    });
+  }
+  return obj;
+};
+
 const getAllProducts = async (query: Record<string, any>) => {
   const {
     page = 1,
@@ -59,7 +73,7 @@ const getAllProducts = async (query: Record<string, any>) => {
   const andConditions: any[] = [];
 
   // For public client, only show active products
-  if (isAdmin !== 'true') {
+  if (isAdmin !== 'true' && isAdmin !== true) {
     andConditions.push({ isActive: true });
   }
 
@@ -121,8 +135,12 @@ const getAllProducts = async (query: Record<string, any>) => {
     .skip(skip)
     .limit(Number(limit));
 
-  const products = await productsQuery;
+  let products = await productsQuery;
   const total = await ProductModel.countDocuments(filterObj);
+
+  if (isAdmin !== 'true' && isAdmin !== true) {
+    products = products.map(sanitizeProductForPublic);
+  }
 
   return {
     products,
@@ -135,12 +153,15 @@ const getAllProducts = async (query: Record<string, any>) => {
   };
 };
 
-const getFeaturedProducts = async () => {
-  const featured = await ProductModel.find({ isActive: true }).limit(8);
+const getFeaturedProducts = async (isAdmin: boolean = false) => {
+  let featured = await ProductModel.find({ isActive: true }).limit(8);
+  if (!isAdmin) {
+    featured = featured.map(sanitizeProductForPublic);
+  }
   return featured;
 };
 
-const getProductBySlug = async (slug: string) => {
+const getProductBySlug = async (slug: string, isAdmin: boolean = false) => {
   let product = null;
   if (slug.match(/^[0-9a-fA-F]{24}$/)) {
     product = await ProductModel.findById(slug);
@@ -150,6 +171,9 @@ const getProductBySlug = async (slug: string) => {
   }
   if (!product) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
+  }
+  if (!isAdmin) {
+    return sanitizeProductForPublic(product);
   }
   return product;
 };
@@ -217,6 +241,7 @@ const createProduct = async (payload: any, files: FileBuffers) => {
     category: payload.category,
     price: Number(payload.price) || sizes[0]?.price || 0,
     salePrice: payload.salePrice ? Number(payload.salePrice) : undefined,
+    costPrice: payload.costPrice !== undefined ? Number(payload.costPrice) : undefined,
     images: [featuredImageUrl, ...allGalleryUrls],
     sizes,
     notes,
@@ -288,6 +313,7 @@ const updateProduct = async (id: string, payload: any, files: FileBuffers) => {
   if (badges)      patch.badges      = badges;
   if (payload.category)      patch.category      = payload.category;
   if (payload.price !== undefined) patch.price    = Number(payload.price);
+  if (payload.costPrice !== undefined) patch.costPrice = Number(payload.costPrice);
   if (payload.isActive !== undefined)
     patch.isActive = payload.isActive !== 'false' && payload.isActive !== false;
   if (payload.lowStockThreshold !== undefined)

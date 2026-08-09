@@ -5,6 +5,7 @@ const sizeSchema = new Schema<ISize>({
   ml: { type: Number, required: true, min: 1 },
   price: { type: Number, required: true, min: 0 },
   salePrice: { type: Number, min: 0 },
+  costPrice: { type: Number, min: 0, default: 0 },
   stock: { type: Number, required: true, min: 0, default: 0 },
   sku: { type: String, trim: true },
 });
@@ -41,6 +42,7 @@ const productSchema = new Schema<IProduct>(
     images: [{ type: String, required: true }],
     price: { type: Number, required: true, min: 0 },
     salePrice: { type: Number, min: 0 },
+    costPrice: { type: Number, min: 0, default: 0 },
     saleEndsAt: Date,
     badge: {
       bn: String,
