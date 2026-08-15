@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { ProductController } from './product.controller';
-import auth from '../../middlewares/auth.middleware';
+import auth, { optionalAuth } from '../../middlewares/auth.middleware';
 import { USER_ROLE } from '../Auth/auth.constant';
 
 const router = express.Router();
@@ -19,14 +19,14 @@ const productImageFields = upload.fields([
   { name: 'socialImage',   maxCount: 1 },
 ]);
 
-router.get('/', ProductController.getAllProducts);
-router.get('/featured', ProductController.getFeaturedProducts);
+router.get('/', optionalAuth, ProductController.getAllProducts);
+router.get('/featured', optionalAuth, ProductController.getFeaturedProducts);
 
 // Admin / Inventory endpoints
 router.get('/export-inventory', auth(USER_ROLE.admin), ProductController.exportInventoryCSV);
 router.post('/bulk-update', auth(USER_ROLE.admin), upload.single('file'), ProductController.bulkUpdateProducts);
 
-router.get('/:slug', ProductController.getProductBySlug);
+router.get('/:slug', optionalAuth, ProductController.getProductBySlug);
 
 // Admin / CRUD endpoints
 router.post('/',    auth(USER_ROLE.admin), productImageFields, ProductController.createProduct);
