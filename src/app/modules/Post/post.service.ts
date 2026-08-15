@@ -76,6 +76,14 @@ const createPost = async (payload: any) => {
 };
 
 const updatePost = async (id: string, payload: any) => {
+  if (payload.slug) {
+    payload.slug = payload.slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const existing = await PostModel.findOne({ slug: payload.slug, _id: { $ne: id } });
+    if (existing) {
+      throw new AppError(StatusCodes.CONFLICT, 'Post with this slug already exists');
+    }
+  }
+
   const result = await PostModel.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
