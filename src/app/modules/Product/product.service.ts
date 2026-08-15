@@ -162,16 +162,18 @@ const getFeaturedProducts = async (isAdmin: boolean = false) => {
 };
 
 const getProductBySlug = async (slug: string, isAdmin: boolean = false) => {
-  let product = null;
-  if (slug.match(/^[0-9a-fA-F]{24}$/)) {
+  // 1. Try finding by slug first
+  let product = await ProductModel.findOne({ slug });
+
+  // 2. If not found by slug, fallback to _id lookup (if valid ObjectId format)
+  if (!product && slug.match(/^[0-9a-fA-F]{24}$/)) {
     product = await ProductModel.findById(slug);
   }
-  if (!product) {
-    product = await ProductModel.findOne({ slug });
-  }
+
   if (!product) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Product not found');
   }
+
   if (!isAdmin) {
     return sanitizeProductForPublic(product);
   }

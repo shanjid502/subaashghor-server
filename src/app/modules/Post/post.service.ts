@@ -48,8 +48,14 @@ const getAllPosts = async (query: Record<string, any>) => {
 };
 
 const getPostBySlug = async (slug: string) => {
-  const post = await PostModel.findOne({ slug })
+  let post = await PostModel.findOne({ slug })
     .populate('relatedProducts', 'title slug cover variants');
+
+  if (!post && slug.match(/^[0-9a-fA-F]{24}$/)) {
+    post = await PostModel.findById(slug)
+      .populate('relatedProducts', 'title slug cover variants');
+  }
+
   if (!post) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Post not found');
   }
