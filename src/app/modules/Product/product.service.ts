@@ -308,7 +308,13 @@ const updateProduct = async (id: string, payload: any, files: FileBuffers) => {
   if (name)        patch.name        = name;
   if (tagline)     patch.tagline     = tagline;
   if (description !== undefined) patch.description = description;
-  if (sizes)       patch.sizes       = sizes;
+  if (sizes) {
+    patch.sizes = sizes;
+    if (sizes.length > 0 && payload.price === undefined) {
+      patch.price = sizes[0].price;
+      patch.salePrice = sizes[0].salePrice;
+    }
+  }
   if (notes)       patch.notes       = notes;
   if (robotsMeta)  patch.robotsMeta  = robotsMeta;
   if (faqs)        patch.faqs        = faqs;
