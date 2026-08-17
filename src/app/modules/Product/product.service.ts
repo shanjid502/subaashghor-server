@@ -323,6 +323,15 @@ const updateProduct = async (id: string, payload: any, files: FileBuffers) => {
   if (payload.metaTitle)       patch.metaTitle       = parseField(payload.metaTitle, undefined);
   if (payload.metaDescription) patch.metaDescription = parseField(payload.metaDescription, undefined);
   if (payload.metaKeywords !== undefined) patch.metaKeywords = payload.metaKeywords;
+  if (payload.slug) {
+    const slug = payload.slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const existingProductWithSlug = await ProductModel.findOne({ slug, _id: { $ne: id } });
+    if (existingProductWithSlug) {
+      throw new AppError(StatusCodes.CONFLICT, `A product with slug "${slug}" already exists. Use a different English name or provide a custom slug.`);
+    }
+    patch.slug = slug;
+  }
+
   if (payload.canonicalUrl  !== undefined) patch.canonicalUrl  = payload.canonicalUrl;
 
   const result = await ProductModel.findByIdAndUpdate(id, patch, {
