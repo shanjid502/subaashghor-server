@@ -15,6 +15,7 @@ import { RedirectRoutes } from '../modules/Redirect/redirect.route';
 import { ProductController } from '../modules/Product/product.controller';
 import { GoogleAnalyticsRoutes } from '../modules/GoogleAnalytics/googleanalytics.route';
 import { generateSitemapXml } from '../utils/sitemapGenerator';
+import { generateLlmsTxt } from '../utils/llmsGenerator';
 import { SettingsModel } from '../modules/Settings/settings.model';
 // --- INJECT IMPORTS HERE ---
 const fbFeedRouter = Router();
@@ -68,5 +69,20 @@ router.get('/robots.txt', async (_req: Request, res: Response) => {
     res.status(500).send('Failed to load robots.txt');
   }
 });
+
+// Dynamic llms.txt — regenerated from MongoDB on every request (CDN/proxy caches for 1h)
+const llmsTxtHandler = async (_req: Request, res: Response) => {
+  try {
+    const txt = await generateLlmsTxt();
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // 1h
+    res.send(txt);
+  } catch {
+    res.status(500).send('Failed to generate llms.txt');
+  }
+};
+
+router.get('/llms.txt', llmsTxtHandler);
+router.get('/llm.txt', llmsTxtHandler); // alias
 
 export default router;
