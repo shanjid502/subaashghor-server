@@ -4,6 +4,36 @@ import { PostModel } from '../modules/Post/post.model';
 const BASE_URL = process.env.STOREFRONT_URL || 'https://subaashghor.com';
 
 /**
+ * Strips HTML tags and converts markup to clean plain text / Markdown.
+ */
+function cleanHtmlToMarkdown(html: string): string {
+  if (!html) return '';
+  return html
+    // Convert <a> tags to plain text
+    .replace(/<a\s+(?:[^>]*?\s+)?href=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi, '$2')
+    // Convert <strong>, <b> to bold **text**
+    .replace(/<(?:strong|b)>(.*?)<\/(?:strong|b)>/gi, '**$1**')
+    // Convert <em>, <i> to italic *text*
+    .replace(/<(?:em|i)>(.*?)<\/(?:em|i)>/gi, '*$1*')
+    // Convert headings and paragraphs to whitespace
+    .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, ' $1. ')
+    .replace(/<p[^>]*>(.*?)<\/p>/gi, ' $1 ')
+    .replace(/<br\s*\/?>/gi, ' ')
+    // Strip all remaining HTML tags
+    .replace(/<[^>]+>/g, ' ')
+    // Decode common HTML entities
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    // Normalize consecutive whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Generates the full llms.txt (and llm.txt) content dynamically from the live
  * MongoDB catalogue.  Called on every request — the response is cache-controlled
  * at the HTTP layer (max-age=3600) so MongoDB is hit at most once per hour.
@@ -49,8 +79,8 @@ export const generateLlmsTxt = async (): Promise<string> => {
   for (const p of products as any[]) {
     const name = p.name?.en || 'Unnamed';
     const nameBn = p.name?.bn || '';
-    const tagline = p.tagline?.en || '';
-    const description = p.description?.en || '';
+    const tagline = cleanHtmlToMarkdown(p.tagline?.en || '');
+    const description = cleanHtmlToMarkdown(p.description?.en || '');
     const category = p.category || '';
     const slug = p.slug || '';
 
@@ -87,7 +117,7 @@ export const generateLlmsTxt = async (): Promise<string> => {
     for (const post of postsResult as any[]) {
       const title = post.title?.en || post.title || 'Untitled';
       const slug = post.slug || '';
-      const excerpt = post.excerpt?.en || post.excerpt || '';
+      const excerpt = cleanHtmlToMarkdown(post.excerpt?.en || post.excerpt || '');
       const dateStr = post.date
         ? new Date(post.date).toISOString().split('T')[0]
         : '';

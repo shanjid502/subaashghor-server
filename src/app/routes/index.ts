@@ -76,7 +76,7 @@ const llmsTxtHandler = async (_req: Request, res: Response) => {
     const txt = await generateLlmsTxt();
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=3600'); // 1h
-    res.send(txt);
+    res.end(Buffer.from(txt, 'utf-8'));
   } catch {
     res.status(500).send('Failed to generate llms.txt');
   }
